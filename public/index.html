@@ -98,6 +98,14 @@ body { margin: 0; }
           <label for="icon-url">Custom icon URL</label>
           <input type="url" id="icon-url" placeholder="https://…/SiteAssets/icons/….png">
         </div>
+        <div class="field" id="layout-wrap">
+          <label for="layout">Icon position</label>
+          <select id="layout">
+            <option value="top">Above text, with heading</option>
+            <option value="left">Left of text, no heading</option>
+          </select>
+          <p class="note" id="layout-note" hidden>The left layout shows the icon beside the body text and skips the heading.</p>
+        </div>
         <div class="row" id="icon-size">
           <div class="field narrow"><label for="icon-w">Width</label><input type="number" id="icon-w" min="8" max="200" value="18"></div>
           <div class="field narrow"><label for="icon-h">Height</label><input type="number" id="icon-h" min="8" max="200" value="18"></div>
@@ -287,15 +295,18 @@ body { margin: 0; }
     var body = $('body').value.trim();
     var ltext = $('ltext').value.trim(), lurl = $('lurl').value.trim();
 
-    var inner = '';
+    var left = !!ic && $('layout').value === 'left';
+    var mr = left ? 0 : 6;
+    var iconHtml = '';
     if (ic) {
       if (preview) {
-        inner += '<span style="display:inline-block; width:' + ic.w + 'px; height:' + ic.h + 'px; border:1px dashed ' + fg + '; opacity:.55; vertical-align:middle; margin-right:6px;"></span>';
+        iconHtml = '<span style="display:inline-block; width:' + ic.w + 'px; height:' + ic.h + 'px; border:1px dashed ' + fg + '; opacity:.55; vertical-align:middle; margin-right:' + mr + 'px;"></span>';
       } else {
-        inner += '<img src="' + esc(ic.url) + '" alt="" width="' + ic.w + '" height="' + ic.h + '" style="vertical-align:middle; margin-right:6px;">';
+        iconHtml = '<img src="' + esc(ic.url) + '" alt="" width="' + ic.w + '" height="' + ic.h + '" style="vertical-align:middle; margin-right:' + mr + 'px;">';
       }
     }
-    if (heading) {
+    var inner = left ? '' : iconHtml;
+    if (heading && !left) {
       var hstyle = 'font-size:' + hs + 'px; font-weight:bold; ';
       if ($('hgrad').checked) {
         hstyle += 'background:-webkit-linear-gradient(45deg, ' + c1 + ', ' + c2 + '); -webkit-background-clip:text; -webkit-text-fill-color:transparent; color:' + hc + ';';
@@ -310,9 +321,18 @@ body { margin: 0; }
       var tgt = $('lnew').checked ? ' target="_blank" rel="noopener noreferrer"' : '';
       link = '<a href="' + esc(lurl || '#') + '"' + tgt + ' style="color:' + lc + '; text-decoration:underline;">' + esc(ltext) + '</a>';
     }
+    var textHtml = '';
     if (bodyHtml || link) {
+      textHtml = '<span style="font-size:' + bs + 'px; color:' + fg + ';">' + bodyHtml + (bodyHtml && link ? ' ' : '') + '</span>' + link;
+    }
+    if (left) {
+      inner = '<table border="0" cellpadding="0" cellspacing="0" style="width:100%;"><tbody><tr>' +
+        '<td style="width:' + (ic.w + 12) + 'px; vertical-align:middle; padding-right:12px;">' + iconHtml + '</td>' +
+        '<td style="vertical-align:middle; color:' + fg + ';">' + textHtml + '</td>' +
+        '</tr></tbody></table>';
+    } else if (textHtml) {
       if (inner) inner += '<br>';
-      inner += '<span style="font-size:' + bs + 'px; color:' + fg + ';">' + bodyHtml + (bodyHtml && link ? ' ' : '') + '</span>' + link;
+      inner += textHtml;
     }
 
     var font = "font-family:'Spectrum Sans Light', sans-serif !important; font-style:normal !important; text-decoration:none !important;";
@@ -326,7 +346,16 @@ body { margin: 0; }
     return out;
   }
 
+  function syncLayout() {
+    var hasIcon = !!iconInfo();
+    var left = hasIcon && $('layout').value === 'left';
+    $('layout-wrap').hidden = !hasIcon;
+    $('layout-note').hidden = !left;
+    ['heading', 'hc', 'hc-hex', 'hsize', 'hgrad'].forEach(function (id) { $(id).disabled = left; });
+  }
+
   function render() {
+    syncLayout();
     $('preview').innerHTML = build(true);
     $('out').value = build(false);
     $('status').textContent = '';
