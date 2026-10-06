@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alert Panel Builder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky controls column on the left, live preview above generated code on the right; stacks at phone width. */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --fg: #14213a;
+  --muted: #5b6780;
+  --line: #d5dbe6;
+  --accent: #0b63d6;
+  --accent-fg: #ffffff;
+  --code-bg: #0e1a30;
+  --code-fg: #d8e4ff;
+  --stage: #e7ebf2;
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1424; --surface: #131e33; --fg: #e6ecf8; --muted: #93a1bd; --line: #26334f;
+    --accent: #4d9bff; --accent-fg: #06142b; --code-bg: #08101f; --code-fg: #cfe0ff; --stage: #1a2742;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1424; --surface: #131e33; --fg: #e6ecf8; --muted: #93a1bd; --line: #26334f;
+  --accent: #4d9bff; --accent-fg: #06142b; --code-bg: #08101f; --code-fg: #cfe0ff; --stage: #1a2742;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 14px; line-height: 1.45; padding-inline: 16px; padding-block: 20px 40px; }
+.wrap { max-width: 1180px; margin-inline: auto; display: flex; flex-direction: column; gap: 18px; }
+header h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 70ch; }
+.cols { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.group { display: flex; flex-direction: column; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.group:last-child { border-bottom: 0; padding-bottom: 0; }
+.group h2 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 140px; min-width: 0; }
+.field.narrow { flex: 0 1 90px; }
+label, .lbl { font-size: 12px; color: var(--muted); }
+input[type="text"], input[type="url"], input[type="number"], select, textarea {
+  width: 100%; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; min-width: 0;
+}
+textarea { resize: vertical; }
+input[type="color"] { width: 38px; height: 32px; padding: 2px; border: 1px solid var(--line); border-radius: 5px; background: var(--bg); flex: none; cursor: pointer; }
+.color { display: flex; gap: 6px; align-items: center; }
+.color input[type="text"] { font-family: var(--font-code); font-size: 12.5px; }
+.check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font: inherit; cursor: pointer; border-radius: 5px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); padding: 6px 12px; }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+button:hover { filter: brightness(1.06); }
+.presets { display: flex; gap: 8px; flex-wrap: wrap; }
+.stage { background: var(--stage); border-radius: 6px; padding: 18px; overflow-x: auto; }
+.note { font-size: 12.5px; color: var(--muted); margin: 0; }
+.head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.head h2 { font-size: 13px; margin: 0; font-weight: 600; }
+.code { width: 100%; min-height: 220px; background: var(--code-bg); color: var(--code-fg); font-family: var(--font-code); font-size: 12px; line-height: 1.5; border: 0; border-radius: 6px; padding: 12px; resize: vertical; white-space: pre; overflow: auto; }
+.status { font-size: 12.5px; color: var(--accent); min-height: 1.3em; }
+.steps { margin: 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; display: flex; flex-direction: column; gap: 2px; }
+.right { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Alert Panel Builder</h1>
+    <p>Pick an icon, gradient border, colors and text, then copy the generated HTML into the Source view of a SharePoint content web part. The sample text below is a placeholder to replace.</p>
+  </header>
+
+  <div class="cols">
+    <form class="panel" id="controls" onsubmit="return false">
+      <div class="presets">
+        <button type="button" id="preset-light">Light frame</button>
+        <button type="button" id="preset-dark">Dark frame</button>
+      </div>
+
+      <div class="group">
+        <h2>Icon</h2>
+        <div class="field">
+          <label for="icon">Alert Panel Icons</label>
+          <select id="icon"></select>
+        </div>
+        <div class="field" id="custom-wrap" hidden>
+          <label for="icon-url">Custom icon URL</label>
+          <input type="url" id="icon-url" placeholder="https://…/SiteAssets/icons/….png">
+        </div>
+        <div class="row" id="icon-size">
+          <div class="field narrow"><label for="icon-w">Width</label><input type="number" id="icon-w" min="8" max="200" value="18"></div>
+          <div class="field narrow"><label for="icon-h">Height</label><input type="number" id="icon-h" min="8" max="200" value="18"></div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>Gradient border</h2>
+        <div class="row">
+          <div class="field"><span class="lbl">Start color</span><div class="color"><input type="color" id="c1" value="#0271eb" aria-label="Gradient start color"><input type="text" id="c1-hex" value="#0271EB" aria-label="Gradient start hex"></div></div>
+          <div class="field"><span class="lbl">End color</span><div class="color"><input type="color" id="c2" value="#03c252" aria-label="Gradient end color"><input type="text" id="c2-hex" value="#03C252" aria-label="Gradient end hex"></div></div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="dir">Direction</label>
+            <select id="dir">
+              <option value="to right">Left to right</option>
+              <option value="to left">Right to left</option>
+              <option value="to bottom">Top to bottom</option>
+              <option value="to top">Bottom to top</option>
+              <option value="45deg">Diagonal 45°</option>
+              <option value="135deg">Diagonal 135°</option>
+            </select>
+          </div>
+          <div class="field narrow"><label for="thick">Border px</label><input type="number" id="thick" min="1" max="20" value="3"></div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="corners">Rounded corners</label>
+            <select id="corners">
+              <option value="trbl">Top right + bottom left</option>
+              <option value="tlbr">Top left + bottom right</option>
+              <option value="all">All four</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          <div class="field narrow"><label for="radius">Radius px</label><input type="number" id="radius" min="0" max="60" value="25"></div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>Frame</h2>
+        <div class="row">
+          <div class="field"><span class="lbl">Background</span><div class="color"><input type="color" id="bg" value="#cdecfd" aria-label="Frame background color"><input type="text" id="bg-hex" value="#CDECFD" aria-label="Frame background hex"></div></div>
+          <div class="field"><span class="lbl">Text color</span><div class="color"><input type="color" id="fg" value="#00194a" aria-label="Text color"><input type="text" id="fg-hex" value="#00194A" aria-label="Text hex"></div></div>
+        </div>
+        <div class="row">
+          <div class="field narrow"><label for="pad">Padding px</label><input type="number" id="pad" min="0" max="40" value="10"></div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>Text</h2>
+        <div class="field"><label for="heading">Heading (optional)</label><input type="text" id="heading" value="IMPORTANT PROCESS UPDATE:"></div>
+        <div class="row">
+          <div class="field"><span class="lbl">Heading color</span><div class="color"><input type="color" id="hc" value="#005eff" aria-label="Heading color"><input type="text" id="hc-hex" value="#005EFF" aria-label="Heading hex"></div></div>
+          <div class="field narrow"><label for="hsize">Heading px</label><input type="number" id="hsize" min="10" max="48" value="20"></div>
+        </div>
+        <label class="check"><input type="checkbox" id="hgrad"> Use the border gradient on the heading text</label>
+        <div class="field"><label for="body">Body text</label><textarea id="body" rows="5">Effective Wednesday, April 8th, when creating an Escalate to Dispatch (ETD), we will warm transfer the customer to the National Field Support (NFS) team using the number provided in the alert on the ETRD screen in Agent OS.</textarea></div>
+        <div class="field narrow"><label for="bsize">Body px</label><input type="number" id="bsize" min="10" max="32" value="14"></div>
+      </div>
+
+      <div class="group">
+        <h2>Hyperlink</h2>
+        <div class="field"><label for="ltext">Link text (blank for no link)</label><input type="text" id="ltext" value="Click here for more information."></div>
+        <div class="field"><label for="lurl">Link URL</label><input type="url" id="lurl" value="https://example.com/more-info"></div>
+        <div class="row">
+          <div class="field"><span class="lbl">Link color</span><div class="color"><input type="color" id="lc" value="#005eff" aria-label="Link color"><input type="text" id="lc-hex" value="#005EFF" aria-label="Link hex"></div></div>
+        </div>
+        <label class="check"><input type="checkbox" id="lnew" checked> Open in a new tab</label>
+      </div>
+    </form>
+
+    <div class="right">
+      <section class="panel" aria-label="Preview">
+        <div class="head"><h2>Preview</h2></div>
+        <div class="stage" id="preview"></div>
+        <p class="note">Icons are stored on your SharePoint site, so they show here as dashed boxes. They appear once the code is pasted into a page on SharePoint. The Spectrum Sans Light font also only applies there.</p>
+      </section>
+
+      <section class="panel" aria-label="Generated code">
+        <div class="head">
+          <h2>HTML to paste</h2>
+          <button type="button" class="primary" id="copy">Copy HTML</button>
+        </div>
+        <textarea class="code" id="out" readonly spellcheck="false" aria-label="Generated HTML"></textarea>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+        <ol class="steps">
+          <li>On your SharePoint page, add a Text or Embed web part, or edit an existing content web part.</li>
+          <li>Switch it to Source (the &lt;/&gt; button), select everything, and paste.</li>
+          <li>Save the web part, then republish the page.</li>
+        </ol>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var BASE = 'https://chartercom.sharepoint.com/sites/BridgetonStrong/SiteAssets/icons/Alert%20Panel%20Icons/';
+  var ICONS = [
+    'icon_AIAssist_25x25.png','icon_AIAssist_50x50.png','icon_corptools_blue_30x30.png','icon_dresscode.png',
+    'icon_facilities_purple_30x30.png','icon_hoopschange.png','icon_hurricane_orange_50x50.png','icon_hurricane_red_50x50.png',
+    'icon_hurricaneInfo_50x50.gif','icon_hurricanerotating_burgundy_50x50.gif','icon_info_blue_30x30.png','icon_info_blue_50x50.png',
+    'icon_infoalert_30x30.gif','icon_internetemail_gold_30x30.png','icon_metrics_grey_30x30.png','icon_mobile_greyblue_50x50.png',
+    'icon_overtime.png','icon_phone_ltblue_30x30.png','icon_severeweather_30x30.gif','icon_universal_burgundy_30x30.png',
+    'icon_universal_burgundy_50x50.png','icon_video_teal_28x38.png','icon_video_teal_30x41.png',
+    'icon_warning_fadeyellowtoorange_50x50.gif','icon_warning_orange_25x25.png','icon_warning_orange_50x50.png',
+    'icon_warning_red_25x25.png','icon_warning_red_50x50.png'
+  ];
+  var $ = function (id) { return document.getElementById(id); };
+
+  var sel = $('icon');
+  var opts = '<option value="">No icon</option>';
+  ICONS.forEach(function (n) {
+    var selected = n === 'icon_infoalert_30x30.gif' ? ' selected' : '';
+    opts += '<option value="' + n + '"' + selected + '>' + n.replace(/^icon_/, '') + '</option>';
+  });
+  opts += '<option value="__custom">Custom URL…</option>';
+  sel.innerHTML = opts;
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function hex(v, fallback) {
+    v = String(v).trim();
+    if (/^[0-9a-f]{6}$/i.test(v)) v = '#' + v;
+    return /^#[0-9a-f]{6}$/i.test(v) ? v.toUpperCase() : fallback;
+  }
+  function num(id, min, max, d) {
+    var n = parseInt($(id).value, 10);
+    if (isNaN(n)) n = d;
+    return Math.max(min, Math.min(max, n));
+  }
+
+  // colour pickers: keep swatch and hex box in sync
+  ['c1', 'c2', 'bg', 'fg', 'hc', 'lc'].forEach(function (id) {
+    var p = $(id), t = $(id + '-hex');
+    p.addEventListener('input', function () { t.value = p.value.toUpperCase(); render(); });
+    t.addEventListener('input', function () {
+      var h = hex(t.value, null);
+      if (h) { p.value = h.toLowerCase(); render(); }
+    });
+  });
+
+  function setColor(id, v) { $(id).value = v.toLowerCase(); $(id + '-hex').value = v.toUpperCase(); }
+
+  function iconInfo() {
+    var v = sel.value;
+    if (!v) return null;
+    var url = v === '__custom' ? $('icon-url').value.trim() : BASE + encodeURIComponent(v).replace(/%2F/g, '/');
+    if (!url) return null;
+    return { url: url, w: num('icon-w', 8, 200, 18), h: num('icon-h', 8, 200, 18) };
+  }
+
+  sel.addEventListener('change', function () {
+    var v = sel.value;
+    $('custom-wrap').hidden = v !== '__custom';
+    $('icon-size').hidden = !v;
+    var m = /_(\d+)x(\d+)\./.exec(v);
+    if (m) { $('icon-w').value = m[1]; $('icon-h').value = m[2]; }
+    else if (v && v !== '__custom') { $('icon-w').value = 25; $('icon-h').value = 25; }
+    render();
+  });
+
+  function radii(R) {
+    var mode = $('corners').value, o = [];
+    if (mode === 'trbl') o = [['top-right', R], ['bottom-left', R]];
+    else if (mode === 'tlbr') o = [['top-left', R], ['bottom-right', R]];
+    else if (mode === 'all') o = [['top-left', R], ['top-right', R], ['bottom-right', R], ['bottom-left', R]];
+    return o;
+  }
+  function radiusCss(list, delta) {
+    return list.map(function (r) { return 'border-' + r[0] + '-radius:' + Math.max(0, r[1] - delta) + 'px;'; }).join(' ');
+  }
+
+  function build(preview) {
+    var c1 = hex($('c1-hex').value, '#0271EB'), c2 = hex($('c2-hex').value, '#03C252');
+    var bg = hex($('bg-hex').value, '#CDECFD'), fg = hex($('fg-hex').value, '#00194A');
+    var hc = hex($('hc-hex').value, '#005EFF'), lc = hex($('lc-hex').value, '#005EFF');
+    var dir = $('dir').value, T = num('thick', 1, 20, 3), R = num('radius', 0, 60, 25), P = num('pad', 0, 40, 10);
+    var hs = num('hsize', 10, 48, 20), bs = num('bsize', 10, 32, 14);
+    var rl = radii(R);
+    var ic = iconInfo();
+    var heading = $('heading').value.trim();
+    var body = $('body').value.trim();
+    var ltext = $('ltext').value.trim(), lurl = $('lurl').value.trim();
+
+    var inner = '';
+    if (ic) {
+      if (preview) {
+        inner += '<span style="display:inline-block; width:' + ic.w + 'px; height:' + ic.h + 'px; border:1px dashed ' + fg + '; opacity:.55; vertical-align:middle; margin-right:6px;"></span>';
+      } else {
+        inner += '<img src="' + esc(ic.url) + '" alt="" width="' + ic.w + '" height="' + ic.h + '" style="vertical-align:middle; margin-right:6px;">';
+      }
+    }
+    if (heading) {
+      var hstyle = 'font-size:' + hs + 'px; font-weight:bold; ';
+      if ($('hgrad').checked) {
+        hstyle += 'background:-webkit-linear-gradient(45deg, ' + c1 + ', ' + c2 + '); -webkit-background-clip:text; -webkit-text-fill-color:transparent; color:' + hc + ';';
+      } else {
+        hstyle += 'color:' + hc + ';';
+      }
+      inner += '<span style="' + hstyle + '">' + esc(heading) + '</span>';
+    }
+    var bodyHtml = esc(body).replace(/\r?\n/g, '<br>');
+    var link = '';
+    if (ltext) {
+      var tgt = $('lnew').checked ? ' target="_blank" rel="noopener noreferrer"' : '';
+      link = '<a href="' + esc(lurl || '#') + '"' + tgt + ' style="color:' + lc + '; text-decoration:underline;">' + esc(ltext) + '</a>';
+    }
+    if (bodyHtml || link) {
+      if (inner) inner += '<br>';
+      inner += '<span style="font-size:' + bs + 'px; color:' + fg + ';">' + bodyHtml + (bodyHtml && link ? ' ' : '') + '</span>' + link;
+    }
+
+    var font = "font-family:'Spectrum Sans Light', sans-serif !important; font-style:normal !important; text-decoration:none !important;";
+    var out = '';
+    out += '<table border="0" cellpadding="' + T + '" cellspacing="0" style="width:100%; background-color:' + c1 + '; background-image:linear-gradient(' + dir + ', ' + c1 + ', ' + c2 + '); ' + radiusCss(rl, 0) + '">\n';
+    out += '  <tbody>\n    <tr>\n      <td>\n';
+    out += '        <table border="0" cellpadding="' + P + '" cellspacing="0" style="width:100%; background-color:' + bg + '; ' + radiusCss(rl, T) + ' ' + font + '">\n';
+    out += '          <tbody>\n            <tr>\n              <td style="color:' + fg + ';">' + inner + '</td>\n            </tr>\n          </tbody>\n';
+    out += '        </table>\n';
+    out += '      </td>\n    </tr>\n  </tbody>\n</table>';
+    return out;
+  }
+
+  function render() {
+    $('preview').innerHTML = build(true);
+    $('out').value = build(false);
+    $('status').textContent = '';
+  }
+
+  document.querySelectorAll('#controls input, #controls select, #controls textarea').forEach(function (el) {
+    if (el.id === 'icon') return;
+    el.addEventListener('input', render);
+    el.addEventListener('change', render);
+  });
+
+  function preset(kind) {
+    if (kind === 'light') {
+      setColor('bg', '#CDECFD'); setColor('fg', '#00194A'); setColor('hc', '#005EFF'); setColor('lc', '#005EFF');
+      $('thick').value = 3; $('radius').value = 25;
+    } else {
+      setColor('bg', '#00194A'); setColor('fg', '#FFFFFF'); setColor('hc', '#FFFFFF'); setColor('lc', '#8FD3FF');
+      $('thick').value = 3; $('radius').value = 30;
+    }
+    render();
+  }
+  $('preset-light').addEventListener('click', function () { preset('light'); });
+  $('preset-dark').addEventListener('click', function () { preset('dark'); });
+
+  $('copy').addEventListener('click', function () {
+    var ta = $('out'), text = ta.value;
+    function fallback() {
+      ta.focus(); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      $('status').textContent = ok ? 'Copied to clipboard.' : 'Text selected. Press Ctrl+C (or Cmd+C) to copy.';
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        $('status').textContent = 'Copied to clipboard.';
+      }, fallback);
+    } else { fallback(); }
+  });
+
+  $('icon-size').hidden = false;
+  var m = /_(\d+)x(\d+)\./.exec(sel.value);
+  if (m) { $('icon-w').value = m[1]; $('icon-h').value = m[2]; }
+  render();
+})();
+</script>
+
+</body>
+</html>
