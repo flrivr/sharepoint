@@ -34,6 +34,7 @@
   --accent: #4d9bff; --accent-fg: #06142b; --code-bg: #08101f; --code-fg: #cfe0ff; --stage: #1a2742; --tile: #dfe6f3;
   color-scheme: dark;
 }
+[hidden] { display: none !important; }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 14px; line-height: 1.45; padding-inline: 16px; padding-block: 20px 40px; }
 .wrap { max-width: 1180px; margin-inline: auto; display: flex; flex-direction: column; gap: 18px; }
@@ -76,6 +77,15 @@ body { margin: 0; }
 button.icon-tile { height: 52px; padding: 4px; display: flex; align-items: center; justify-content: center; background: var(--tile); border: 1px solid var(--line); border-radius: 6px; color: #3a4660; font-size: 11px; line-height: 1.1; text-align: center; overflow: hidden; }
 button.icon-tile img { max-width: 40px; max-height: 40px; object-fit: contain; }
 button.icon-tile[aria-selected="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
+.toolbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.toolbar button { padding: 4px 9px; min-width: 32px; }
+.toolbar input[type="url"] { flex: 1 1 160px; }
+.swatches { display: flex; gap: 4px; }
+.toolbar button.swatch { width: 22px; height: 22px; min-width: 0; padding: 0; border-radius: 50%; }
+.editor { min-height: 110px; padding: 10px; border: 1px solid var(--line); border-radius: 5px; line-height: 1.45; overflow-wrap: anywhere; }
+.editor:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.editor a { color: var(--link, #005EFF); text-decoration: underline; }
+.editor ul, .editor ol { margin: 4px 0 4px 22px; padding: 0; }
 </style>
 
 </head>
@@ -171,16 +181,35 @@ button.icon-tile[aria-selected="true"] { outline: 2px solid var(--accent); outli
           <div class="field narrow"><label for="hsize">Heading px</label><input type="number" id="hsize" min="10" max="48" value="20"></div>
         </div>
         <label class="check"><input type="checkbox" id="hgrad"> Use the border gradient on the heading text</label>
-        <div class="field"><label for="body">Body text</label><textarea id="body" rows="5">Effective Wednesday, April 8th, when creating an Escalate to Dispatch (ETD), we will warm transfer the customer to the National Field Support (NFS) team using the number provided in the alert on the ETRD screen in Agent OS.</textarea></div>
+        <div class="field">
+          <span class="lbl" id="body-lbl">Body text</span>
+          <div class="toolbar" role="toolbar" aria-label="Text formatting">
+            <button type="button" data-cmd="bold" title="Bold" aria-label="Bold"><b>B</b></button>
+            <button type="button" data-cmd="italic" title="Italic" aria-label="Italic"><i>I</i></button>
+            <button type="button" data-cmd="underline" title="Underline" aria-label="Underline"><u>U</u></button>
+            <button type="button" data-cmd="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list">&bull; List</button>
+            <button type="button" data-cmd="removeFormat" title="Clear formatting on the selection" aria-label="Clear formatting">Clear</button>
+          </div>
+          <div class="toolbar" role="group" aria-label="Text color">
+            <span class="lbl">Color</span>
+            <span class="swatches" id="swatches"></span>
+            <input type="color" id="tc" value="#005eff" aria-label="Custom text color" title="Custom color for the selected text">
+          </div>
+          <div class="toolbar" role="group" aria-label="Link">
+            <input type="url" id="linkurl" placeholder="https://… (select text first)" aria-label="Link address">
+            <button type="button" id="link-add">Add link</button>
+            <button type="button" id="link-remove">Remove link</button>
+          </div>
+          <div id="editor" class="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="body-lbl" spellcheck="true"></div>
+          <p class="note" id="editor-note">Select text, then use the toolbar. Press Enter for a new line.</p>
+        </div>
         <div class="field narrow"><label for="bsize">Body px</label><input type="number" id="bsize" min="10" max="32" value="14"></div>
       </div>
 
       <div class="group">
-        <h2>Hyperlink</h2>
-        <div class="field"><label for="ltext">Link text (blank for no link)</label><input type="text" id="ltext" value="Click here for more information."></div>
-        <div class="field"><label for="lurl">Link URL</label><input type="url" id="lurl" value="https://example.com/more-info"></div>
+        <h2>Link defaults</h2>
         <div class="row">
-          <div class="field"><span class="lbl">Link color</span><div class="color"><input type="color" id="lc" value="#005eff" aria-label="Link color"><input type="text" id="lc-hex" value="#005EFF" aria-label="Link hex"></div></div>
+          <div class="field"><span class="lbl">Color for links without their own</span><div class="color"><input type="color" id="lc" value="#005eff" aria-label="Link color"><input type="text" id="lc-hex" value="#005EFF" aria-label="Link hex"></div></div>
         </div>
         <label class="check"><input type="checkbox" id="lnew" checked> Open in a new tab</label>
       </div>
@@ -299,8 +328,6 @@ button.icon-tile[aria-selected="true"] { outline: 2px solid var(--accent); outli
     var rl = radii(R);
     var ic = iconInfo();
     var heading = $('heading').value.trim();
-    var body = $('body').value.trim();
-    var ltext = $('ltext').value.trim(), lurl = $('lurl').value.trim();
 
     var left = !!ic && $('layout').value === 'left';
     var mr = left ? 0 : 6;
@@ -324,23 +351,14 @@ button.icon-tile[aria-selected="true"] { outline: 2px solid var(--accent); outli
       }
       inner += '<span style="' + hstyle + '">' + esc(heading) + '</span>';
     }
-    var bodyHtml = esc(body).replace(/\r?\n/g, '<br>');
-    var link = '';
-    if (ltext) {
-      var tgt = $('lnew').checked ? ' target="_blank" rel="noopener noreferrer"' : '';
-      link = '<a href="' + esc(lurl || '#') + '"' + tgt + ' style="color:' + lc + '; text-decoration:underline;">' + esc(ltext) + '</a>';
-    }
-    var textHtml = '';
-    if (bodyHtml || link) {
-      textHtml = '<span style="font-size:' + bs + 'px; color:' + fg + ';">' + bodyHtml + (bodyHtml && link ? ' ' : '') + '</span>' + link;
-    }
+    var bodyHtml = serializeEditor(fg, lc, $('lnew').checked);
+    var textHtml = bodyHtml ? '<div style="font-size:' + bs + 'px; color:' + fg + ';">' + bodyHtml + '</div>' : '';
     if (left) {
       inner = '<table border="0" cellpadding="0" cellspacing="0" style="width:100%;"><tbody><tr>' +
         '<td style="width:' + (ic.w + 12) + 'px; vertical-align:middle; padding-right:12px;">' + iconHtml + '</td>' +
         '<td style="vertical-align:middle; color:' + fg + ';">' + textHtml + '</td>' +
         '</tr></tbody></table>';
     } else if (textHtml) {
-      if (inner) inner += '<br>';
       inner += textHtml;
     }
 
@@ -353,6 +371,87 @@ button.icon-tile[aria-selected="true"] { outline: 2px solid var(--accent); outli
     out += '        </table>\n';
     out += '      </td>\n    </tr>\n  </tbody>\n</table>';
     return out;
+  }
+
+  function cssToHex(c) {
+    if (!c) return null;
+    var m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(c);
+    if (m) return '#' + [m[1], m[2], m[3]].map(function (n) { return ('0' + (+n).toString(16)).slice(-2); }).join('').toUpperCase();
+    return hex(c, null);
+  }
+  function safeHref(h) {
+    h = (h || '').trim();
+    if (/^(https?:\/\/|mailto:)/i.test(h)) return h;
+    if (/^www\./i.test(h)) return 'https://' + h;
+    return null;
+  }
+  function isBlock(n) { return n && n.nodeType === 1 && /^(DIV|P|UL|OL|LI|BLOCKQUOTE|H[1-6])$/.test(n.nodeName); }
+
+  // Turns the editor contents into clean, inline-styled HTML for SharePoint.
+  function serializeEditor(fg, linkDefault, newTab) {
+    function kids(node, ctx) {
+      var o = '';
+      node.childNodes.forEach(function (c) { o += ser(c, ctx); });
+      return o;
+    }
+    function colorOf(el) {
+      return el.nodeName.toLowerCase() === 'font' ? hex(el.getAttribute('color') || '', null) : cssToHex(el.style && el.style.color);
+    }
+    function ser(n, ctx) {
+      if (n.nodeType === 3) return esc(n.nodeValue).replace(/ /g, '&nbsp;');
+      if (n.nodeType !== 1) return '';
+      var t = n.nodeName.toLowerCase(), st = n.style || {}, c;
+      switch (t) {
+        case 'br': return '<br>';
+        case 'b': case 'strong': case 'i': case 'em': case 'u': {
+          var tag = t === 'strong' ? 'b' : t === 'em' ? 'i' : t;
+          var tcol = colorOf(n), tctx = tcol ? { color: tcol, explicit: true } : ctx;
+          var tin = kids(n, tctx);
+          if (tcol && tcol !== ctx.color) tin = '<span style="color:' + tcol + ';">' + tin + '</span>';
+          return '<' + tag + '>' + tin + '</' + tag + '>';
+        }
+        case 'span': case 'font': {
+          var col = colorOf(n), ctx2 = col ? { color: col, explicit: true } : ctx;
+          var inner = kids(n, ctx2);
+          if (col && col !== ctx.color) inner = '<span style="color:' + col + ';">' + inner + '</span>';
+          if (/underline/.test((st.textDecoration || '') + (st.textDecorationLine || ''))) inner = '<u>' + inner + '</u>';
+          if (st.fontStyle === 'italic') inner = '<i>' + inner + '</i>';
+          if (st.fontWeight === 'bold' || parseInt(st.fontWeight, 10) >= 600) inner = '<b>' + inner + '</b>';
+          return inner;
+        }
+        case 'a': {
+          var href = safeHref(n.getAttribute('href'));
+          var ce = n.querySelector('[style*="color"], font[color]');
+          var acol = colorOf(n) || (ce ? colorOf(ce) : null);
+          if (!acol) acol = ctx.explicit ? ctx.color : linkDefault;
+          var content = kids(n, { color: acol, explicit: true });
+          if (!href) return content;
+          return '<a href="' + esc(href) + '"' + (newTab ? ' target="_blank" rel="noopener noreferrer"' : '') +
+            ' style="color:' + acol + '; text-decoration:underline;">' + content + '</a>';
+        }
+        case 'ul': case 'ol':
+          return '<' + t + ' style="margin:6px 0 6px 22px; padding:0;">' + kids(n, ctx) + '</' + t + '>';
+        case 'li': return '<li style="margin:2px 0;">' + kids(n, ctx) + '</li>';
+        case 'div': case 'p': {
+          c = kids(n, ctx);
+          var prev = n.previousSibling;
+          var pre = prev && !isBlock(prev) && !(prev.nodeType === 3 && !prev.nodeValue.trim()) ? '<br>' : '';
+          return pre + (c === '<br>' ? c : c + '<br>');
+        }
+        default: return kids(n, ctx);
+      }
+    }
+    var out = kids($('editor'), { color: fg, explicit: false });
+    out = out.replace(/<br>(<(?:ul|ol)\b)/g, '$1').replace(/(<\/(?:ul|ol)>)<br>/g, '$1');
+    return out.replace(/^(<br>)+/, '').replace(/(<br>)+$/, '');
+  }
+
+  function styleEditor() {
+    var ed = $('editor');
+    ed.style.background = hex($('bg-hex').value, '#CDECFD');
+    ed.style.color = hex($('fg-hex').value, '#00194A');
+    ed.style.fontSize = num('bsize', 10, 32, 14) + 'px';
+    ed.style.setProperty('--link', hex($('lc-hex').value, '#005EFF'));
   }
 
   function markGrid() {
@@ -372,6 +471,7 @@ button.icon-tile[aria-selected="true"] { outline: 2px solid var(--accent); outli
 
   function render() {
     syncLayout();
+    styleEditor();
     $('preview').innerHTML = build(true);
     $('out').value = build(false);
     $('status').textContent = '';
@@ -411,6 +511,77 @@ button.icon-tile[aria-selected="true"] { outline: 2px solid var(--accent); outli
     } else { fallback(); }
   });
 
+  (function setupEditor() {
+    var ed = $('editor'), note = $('editor-note'), saved = null;
+    var HINT = 'Select text, then use the toolbar. Press Enter for a new line.';
+    ed.innerHTML = 'Effective Wednesday, April 8th, when creating an Escalate to Dispatch (ETD), we will warm transfer the customer to the National Field Support (NFS) team using the number provided in the alert on the ETRD screen in Agent OS. <a href="https://example.com/more-info">Click here for more information.</a>';
+
+    document.addEventListener('selectionchange', function () {
+      var s = window.getSelection();
+      if (!s || !s.rangeCount) return;
+      var r = s.getRangeAt(0);
+      if (ed.contains(r.commonAncestorContainer)) saved = r.cloneRange();
+    });
+    function restore() {
+      ed.focus();
+      if (saved) { var s = window.getSelection(); s.removeAllRanges(); s.addRange(saved); }
+      return window.getSelection();
+    }
+    function say(msg) { note.textContent = msg || HINT; }
+    function exec(cmd, val, css) {
+      restore();
+      try { document.execCommand('styleWithCSS', false, !!css); } catch (e) {}
+      document.execCommand(cmd, false, val || null);
+      var cur = window.getSelection();
+      if (cur && cur.rangeCount && ed.contains(cur.getRangeAt(0).commonAncestorContainer)) saved = cur.getRangeAt(0).cloneRange();
+      say();
+      render();
+    }
+
+    document.querySelectorAll('[data-cmd]').forEach(function (b) {
+      b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+      b.addEventListener('click', function () { exec(b.getAttribute('data-cmd')); });
+    });
+
+    var sw = $('swatches');
+    ['#00194A', '#005EFF', '#0271EB', '#03C252', '#96004D', '#D7261E', '#F5A623', '#FFFFFF'].forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'swatch'; b.style.background = c;
+      b.title = 'Text color ' + c; b.setAttribute('aria-label', 'Text color ' + c);
+      b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+      b.addEventListener('click', function () { exec('foreColor', c, true); });
+      sw.appendChild(b);
+    });
+    $('tc').addEventListener('change', function () { exec('foreColor', $('tc').value, true); });
+
+    $('link-add').addEventListener('click', function () {
+      var href = safeHref($('linkurl').value);
+      if (!href) { say('Enter a web address that starts with https://, http:// or mailto:.'); return; }
+      var s = restore();
+      if (s.rangeCount && s.isCollapsed) {
+        var n = s.anchorNode, a = null;
+        while (n && n !== ed) { if (n.nodeName === 'A') { a = n; break; } n = n.parentNode; }
+        if (a) { a.setAttribute('href', href); say('Link updated.'); render(); return; }
+        say('Select the text you want to turn into a link first.');
+        return;
+      }
+      exec('createLink', href);
+      say('Link added.');
+    });
+    $('link-remove').addEventListener('click', function () {
+      var s = restore();
+      if (s.rangeCount && s.isCollapsed) {
+        var n = s.anchorNode;
+        while (n && n !== ed) {
+          if (n.nodeName === 'A') { var r = document.createRange(); r.selectNodeContents(n); s.removeAllRanges(); s.addRange(r); saved = r.cloneRange(); break; }
+          n = n.parentNode;
+        }
+      }
+      exec('unlink');
+    });
+    ed.addEventListener('input', render);
+    ed.addEventListener('blur', function () {});
+  })();
   (function buildGrid() {
     var g = $('icon-grid');
     function tile(name, label) {
