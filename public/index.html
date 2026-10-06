@@ -89,6 +89,18 @@ button.icon-tile[aria-selected="true"] { outline: 2px solid var(--accent); outli
 .editor:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .editor a { color: var(--link, #005EFF); text-decoration: underline; }
 .editor ul, .editor ol { margin: 4px 0 4px 22px; padding: 0; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+button.tab { border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: none; padding: 8px 14px; font-weight: 600; color: var(--muted); }
+button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.hm-stage { overflow: hidden; border-radius: 6px; background: var(--stage); padding: 12px; }
+.hm-bar { position: relative; height: 84px; border-radius: 4px; background: linear-gradient(90deg, #00194A, #0b4fb3 60%, #0271EB); overflow: hidden; flex: none; }
+.hm-title { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: #fff; font-size: 26px; font-weight: 300; letter-spacing: .02em; white-space: nowrap; }
+.hm-msg { position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 2; white-space: nowrap; font-family: "Spectrum Sans Light", "Spectrum Sans", "Segoe UI Light", "Segoe UI", sans-serif; font-weight: 300; letter-spacing: .04em; text-shadow: 0 1px 6px rgba(0,0,0,.35); }
+.hm-msg a { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.hm-hidden { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #cfe0ff; font-size: 13px; }
+.field input[type="range"] { padding: 0; }
+.group > .field, .panel > .field { flex: 0 0 auto; }
+.hm-scale { position: relative; }
 </style>
 
 </head>
@@ -96,9 +108,15 @@ button.icon-tile[aria-selected="true"] { outline: 2px solid var(--accent); outli
 <div class="wrap">
   <header>
     <h1>Alert Panel Builder</h1>
-    <p>Pick an icon, gradient border, colors and text, then copy the generated HTML into the Source view of a SharePoint content web part. The sample text below is a placeholder to replace.</p>
+    <p>Two tools for the Bridgeton Strong site: build a gradient alert panel for a content web part, or update the header message script. Sample text is a placeholder to replace.</p>
   </header>
 
+  <div class="tabs" role="tablist" aria-label="Builders">
+    <button type="button" class="tab" role="tab" id="tab-alert" aria-selected="true" aria-controls="panel-alert">Alert panel</button>
+    <button type="button" class="tab" role="tab" id="tab-header" aria-selected="false" aria-controls="panel-header" tabindex="-1">Header message</button>
+  </div>
+
+  <div id="panel-alert" role="tabpanel" aria-labelledby="tab-alert">
   <div class="cols">
     <form class="panel" id="controls" onsubmit="return false">
       <div class="presets">
@@ -238,6 +256,56 @@ button.icon-tile[aria-selected="true"] { outline: 2px solid var(--accent); outli
           <li>Save the web part, then republish the page.</li>
         </ol>
       </section>
+    </div>
+  </div>
+  </div>
+  <div id="panel-header" role="tabpanel" aria-labelledby="tab-header" hidden>
+    <div class="cols">
+      <form class="panel" id="hm-controls" onsubmit="return false">
+        <div class="group">
+          <h2>Message</h2>
+          <div class="field"><label for="hm-before">Text before the link</label><input type="text" id="hm-before" value="Happy Customer Service Week! See the"></div>
+          <div class="row">
+            <div class="field"><label for="hm-ltext">Link text</label><input type="text" id="hm-ltext" value="Pulse App"></div>
+            <div class="field"><label for="hm-lurl">Link address</label><input type="url" id="hm-lurl" value="https://pulse-6756b.web.app/"></div>
+          </div>
+          <div class="field"><label for="hm-after">Text after the link</label><input type="text" id="hm-after" value="for events"></div>
+          <p class="note">Spaces around the link are added for you. Leave the link text blank for a message without a link.</p>
+        </div>
+        <div class="group">
+          <h2>Look</h2>
+          <div class="field"><span class="lbl">Text and link color</span>
+            <div class="color"><input type="color" id="hm-c" value="#ffcb3e" aria-label="Message color"><input type="text" id="hm-c-hex" value="#FFCB3E" aria-label="Message color hex"></div>
+            <div class="toolbar" id="hm-swatches" role="group" aria-label="Color presets"></div>
+          </div>
+          <div class="row">
+            <div class="field narrow"><label for="hm-size">Size px</label><input type="number" id="hm-size" min="8" max="72" value="20"></div>
+            <div class="field narrow"><label for="hm-hide">Hide below px</label><input type="number" id="hm-hide" min="0" max="4000" value="1100"></div>
+          </div>
+          <div class="field"><label for="hm-pos">Position in header: <span id="hm-pos-val">50</span>% (lower is further left)</label><input type="range" id="hm-pos" min="0" max="100" value="50"></div>
+        </div>
+      </form>
+      <div class="right">
+        <section class="panel" aria-label="Header preview">
+          <div class="head"><h2>Preview</h2>
+            <div class="field narrow" style="flex-basis:150px"><label for="hm-pw">Screen width</label>
+              <select id="hm-pw"><option value="1400">1400 px</option><option value="1200">1200 px</option><option value="1000">1000 px</option><option value="700">700 px</option></select>
+            </div>
+          </div>
+          <div class="hm-stage" id="hm-stage"><div class="hm-scale" id="hm-scale"><div class="hm-bar" id="hm-bar"><div class="hm-title">Bridgeton Strong</div><div class="hm-msg" id="hm-msg"></div><div class="hm-hidden" id="hm-hidden" hidden>Message hidden at this screen width</div></div></div></div>
+          <p class="note">A scaled-down approximation of the site header. The real colors and title come from your site, so check the position on the live page.</p>
+        </section>
+        <section class="panel" aria-label="Generated file">
+          <div class="head"><h2>header-message.js</h2><button type="button" class="primary" id="hm-copy">Copy file</button></div>
+          <textarea class="code" id="hm-out" readonly spellcheck="false" aria-label="Generated header-message.js" style="min-height:320px"></textarea>
+          <div class="status" id="hm-status" role="status" aria-live="polite"></div>
+          <ol class="steps">
+            <li>Copy the file contents above.</li>
+            <li>Open Site Assets on the Bridgeton Strong site and replace <b>header-message.js</b>: upload a file with the same name and choose Replace, or edit it in place if your library allows it.</li>
+            <li>Refresh the page with Ctrl+F5. The script line on your pages stays the same.</li>
+          </ol>
+        </section>
+      </div>
     </div>
   </div>
 </div>
@@ -612,6 +680,128 @@ button.icon-tile[aria-selected="true"] { outline: 2px solid var(--accent); outli
   $('icon-size').hidden = false;
   var m = /_(\d+)x(\d+)\./.exec(sel.value);
   if (m) { $('icon-w').value = m[1]; $('icon-h').value = m[2]; }
+  render();
+})();
+(function () {
+  var TEMPLATE = "/* Message with a link in the site header\n   Upload to Site Assets, then add one line to any script web part on the page:\n   script src=\"/sites/BridgetonStrong/SiteAssets/header-message.js\"  (inside a script tag) */\n(function () {\n  /* ======================= SETTINGS ======================= */\n  var BEFORE    = '{{BEFORE}}';\n  var LINK_TEXT = '{{LINK_TEXT}}';\n  var LINK_URL  = '{{LINK_URL}}';\n  var AFTER     = '{{AFTER}}';\n  var COLOR     = '{{COLOR}}';   // text and link color\n  var FONT_SIZE = '{{FONT_SIZE}}';\n  var POSITION  = '{{POSITION}}';       // left-to-right spot in the header: lower = further left\n  var HIDE_BELOW_PX = {{HIDE_BELOW}};    // hide on screens narrower than this so it can't overlap the title\n  /* ======================================================== */\n\n  if (window.__bstHeaderMsg) return;\n  window.__bstHeaderMsg = true;\n\n  var css =\n    '#bst-header-msg{position:absolute;left:' + POSITION + ';top:50%;transform:translate(-50%,-50%);z-index:2;' +\n      'color:' + COLOR + ';font-family:\"Spectrum Sans Light\",\"Spectrum Sans\",\"Segoe UI Light\",\"Segoe UI\",sans-serif;' +\n      'font-weight:300;font-size:' + FONT_SIZE + ';letter-spacing:.04em;white-space:nowrap;' +\n      'text-shadow:0 1px 6px rgba(0,0,0,.35);pointer-events:none;}' +\n    '#bst-header-msg a{color:' + COLOR + ' !important;font-weight:600;text-decoration:underline;' +\n      'text-underline-offset:3px;pointer-events:auto;}' +\n    '#bst-header-msg a:hover{color:#FFFFFF !important;}' +\n    '#bst-header-msg a:focus-visible{outline:2px solid ' + COLOR + ';outline-offset:2px;}' +\n    '@media (max-width:' + HIDE_BELOW_PX + 'px){#bst-header-msg{display:none;}}';\n  var st = document.createElement('style');\n  st.textContent = css;\n  document.head.appendChild(st);\n\n  function add() {\n    var header = document.querySelector('#spSiteHeader, [aria-label=\"SharePoint Site Header\"]');\n    if (!header || header.querySelector('#bst-header-msg')) return;\n    if (getComputedStyle(header).position === 'static') header.style.position = 'relative';\n\n    var box = document.createElement('div');\n    box.id = 'bst-header-msg';\n    var a = document.createElement('a');\n    a.href = LINK_URL; a.target = '_blank'; a.rel = 'noopener';\n    a.textContent = LINK_TEXT;\n    box.appendChild(document.createTextNode(BEFORE));\n    box.appendChild(a);\n    box.appendChild(document.createTextNode(AFTER));\n    header.appendChild(box);\n  }\n\n  add();\n  setInterval(add, 1000);   // SharePoint can redraw the header; put the message back if it does\n})();\n";
+  function $(id) { return document.getElementById(id); }
+  function hex(v, f) {
+    v = String(v).trim();
+    if (/^[0-9a-f]{6}$/i.test(v)) v = '#' + v;
+    return /^#[0-9a-f]{6}$/i.test(v) ? v.toUpperCase() : f;
+  }
+  function num(id, min, max, d) {
+    var n = parseInt($(id).value, 10);
+    if (isNaN(n)) n = d;
+    return Math.max(min, Math.min(max, n));
+  }
+  function q(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' '); }
+
+  function values() {
+    var before = $('hm-before').value.replace(/\s+$/, '');
+    if (before) before += ' ';
+    var after = $('hm-after').value.replace(/^\s+/, '');
+    if (after && !/^[.,;:!?)\]]/.test(after)) after = ' ' + after;
+    var url = $('hm-lurl').value.trim();
+    if (/^www\./i.test(url)) url = 'https://' + url;
+    return {
+      before: before, ltext: $('hm-ltext').value.trim(), url: url, after: after,
+      color: hex($('hm-c-hex').value, '#FFCB3E'),
+      size: num('hm-size', 8, 72, 20), pos: num('hm-pos', 0, 100, 50), hide: num('hm-hide', 0, 4000, 1100)
+    };
+  }
+  function generate(v) {
+    var map = {
+      BEFORE: q(v.before), LINK_TEXT: q(v.ltext), LINK_URL: q(v.url), AFTER: q(v.after),
+      COLOR: v.color, FONT_SIZE: v.size + 'px', POSITION: v.pos + '%', HIDE_BELOW: String(v.hide)
+    };
+    return TEMPLATE.replace(/\{\{(\w+)\}\}/g, function (m, k) { return map[k]; });
+  }
+  function render() {
+    var v = values();
+    $('hm-pos-val').textContent = v.pos;
+    var width = parseInt($('hm-pw').value, 10);
+    var bar = $('hm-bar'), msg = $('hm-msg');
+    bar.style.width = width + 'px';
+    var avail = $('hm-stage').clientWidth - 24;
+    var sc = avail > 0 ? Math.min(1, avail / width) : 1;
+    bar.style.transform = 'scale(' + sc + ')';
+    bar.style.transformOrigin = '0 0';
+    $('hm-scale').style.width = Math.round(width * sc) + 'px';
+    $('hm-scale').style.height = Math.round(84 * sc) + 'px';
+    msg.textContent = '';
+    msg.style.left = v.pos + '%';
+    msg.style.color = v.color;
+    msg.style.fontSize = v.size + 'px';
+    msg.appendChild(document.createTextNode(v.before));
+    var a = document.createElement('a');
+    a.textContent = v.ltext;
+    a.style.color = v.color;
+    a.setAttribute('href', v.url || '#');
+    a.addEventListener('click', function (e) { e.preventDefault(); });
+    msg.appendChild(a);
+    msg.appendChild(document.createTextNode(v.after));
+    var hidden = width < v.hide;
+    msg.hidden = hidden;
+    $('hm-hidden').hidden = !hidden;
+    $('hm-out').value = generate(v);
+    $('hm-status').textContent = '';
+  }
+
+  function sync(pid, tid) {
+    var p = $(pid), t = $(tid);
+    p.addEventListener('input', function () { t.value = p.value.toUpperCase(); render(); });
+    t.addEventListener('input', function () {
+      var h = hex(t.value, null);
+      if (h) { p.value = h.toLowerCase(); render(); }
+    });
+  }
+  sync('hm-c', 'hm-c-hex');
+  ['#FFCB3E', '#FFFFFF', '#03C252', '#7FD1FF', '#FF8A65'].forEach(function (c) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'swatch'; b.style.background = c;
+    b.title = c; b.setAttribute('aria-label', 'Use color ' + c);
+    b.addEventListener('click', function () { $('hm-c').value = c.toLowerCase(); $('hm-c-hex').value = c; render(); });
+    $('hm-swatches').appendChild(b);
+  });
+  document.querySelectorAll('#hm-controls input, #hm-pw').forEach(function (el) {
+    el.addEventListener('input', render);
+    el.addEventListener('change', render);
+  });
+
+  $('hm-copy').addEventListener('click', function () {
+    var ta = $('hm-out');
+    function fallback() {
+      ta.focus(); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      $('hm-status').textContent = ok ? 'Copied to clipboard.' : 'Text selected. Press Ctrl+C (or Cmd+C) to copy.';
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ta.value).then(function () { $('hm-status').textContent = 'Copied to clipboard.'; }, fallback);
+    } else { fallback(); }
+  });
+
+  // tabs
+  var tabs = [['tab-alert', 'panel-alert'], ['tab-header', 'panel-header']];
+  function show(i) {
+    tabs.forEach(function (p, j) {
+      $(p[0]).setAttribute('aria-selected', j === i ? 'true' : 'false');
+      $(p[0]).tabIndex = j === i ? 0 : -1;
+      $(p[1]).hidden = j !== i;
+    });
+    if (i === 1) render();
+  }
+  tabs.forEach(function (p, i) {
+    $(p[0]).addEventListener('click', function () { show(i); });
+    $(p[0]).addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        var n = (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+        show(n); $(tabs[n][0]).focus();
+      }
+    });
+  });
+  window.addEventListener('resize', function () { if (!$('panel-header').hidden) render(); });
   render();
 })();
 </script>
