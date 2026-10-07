@@ -12,6 +12,13 @@
 
   var root=document.documentElement;
   root.classList.add('bs-halloween');
+  /* SharePoint's page scripts can reset <html class> after load, which would silently switch the theme off.
+     Put the class back whenever it goes missing. */
+  try{
+    new MutationObserver(function(){
+      if(!root.classList.contains('bs-halloween')) root.classList.add('bs-halloween');
+    }).observe(root,{attributes:true,attributeFilter:['class']});
+  }catch(e){}
 
   /* Spooky title font (falls back to Chiller/fantasy if blocked) */
   try{
