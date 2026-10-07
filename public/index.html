@@ -429,7 +429,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   </div>
   <div id="panel-htmled" role="tabpanel" aria-labelledby="tab-htmled" hidden>
     <section class="panel he-wrap" aria-label="HTML editor">
-      <p class="note">Write and format content here, add images by URL, then copy the HTML to paste into a SharePoint web part (Text web part Source view, or an Embed/Script Editor web part).</p>
+      <p class="note">Write and format content here, add images by URL, then copy the HTML to paste into a SharePoint web part (Text web part Source view, or an Embed/Script Editor web part). Your work is saved in this browser until you click Clear all.</p>
       <div class="toolbar" role="toolbar" aria-label="Text formatting" id="he-bar">
         <button type="button" data-cmd="bold" title="Bold" aria-label="Bold"><b>B</b></button>
         <button type="button" data-cmd="italic" title="Italic" aria-label="Italic"><i>I</i></button>
@@ -1585,7 +1585,11 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     }
   });
   $('he-clear').addEventListener('click', function () {
-    if (confirm('Clear everything in the editor?')) { loadHtml('<p><br></p>'); src.value = ''; }
+    if (confirm('Clear everything in the editor? This also removes the saved draft.')) {
+      loadHtml('<p><br></p>'); src.value = '';
+      src.hidden = true; area.hidden = false; $('he-toggle').textContent = 'View / edit HTML';
+      saveDraft();
+    }
   });
   $('he-copy').addEventListener('click', function () {
     if (showingSource()) loadHtml(src.value);
@@ -1601,6 +1605,27 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(out).then(ok, fallback);
     else fallback();
   });
+
+  // ---------- keep the draft between visits (this browser only) ----------
+  var DRAFT_KEY = 'htmlEditorDraft.v1', saveTimer;
+  function saveDraft() {
+    clearTimeout(saveTimer);
+    try {
+      var content = showingSource() ? src.value : outputHtml();
+      if (!content.trim() || content === '<p><br></p>') localStorage.removeItem(DRAFT_KEY);
+      else localStorage.setItem(DRAFT_KEY, content);
+    } catch (e) {}   // storage blocked or full: the editor still works, it just won't persist
+  }
+  function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveDraft, 400); }
+  try {
+    var draft = localStorage.getItem(DRAFT_KEY);
+    if (draft) loadHtml(draft);
+  } catch (e) {}
+  new MutationObserver(queueSave).observe(area, { childList: true, subtree: true, attributes: true, characterData: true });
+  src.addEventListener('input', queueSave);
+  $('he-toggle').addEventListener('click', queueSave);
+  window.addEventListener('pagehide', saveDraft);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) saveDraft(); });
 })();
 </script>
 
