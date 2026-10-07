@@ -22,7 +22,7 @@
 
   /* ===== Critters ===== */
   var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var FREQ=1;   // 0.5 = rarer, 2 = busier. Base is one critter every ~14-26 seconds.
+  var FREQ=3;   // 1 = calm, 3 = busy (a critter every ~5-9 seconds), 5 = swarm
   var layer=document.createElement('div'); layer.id='bs-hw-layer'; layer.setAttribute('aria-hidden','true');
   document.body.appendChild(layer);
 
@@ -125,6 +125,6 @@
   if(!reduce){
     setTimeout(bat,1500);
     setTimeout(ghost,4000);
-    setTimeout(auto,9000);
+    setTimeout(auto,5000);
   }
 })();
