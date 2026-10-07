@@ -7,22 +7,11 @@
      ?halloween=1   force on        ?halloween=0   force off
 -->
 <style id="bs-halloween-css">
-/* Everything below is scoped to html.bs-halloween, which the script only adds inside the date window. */
+/* Everything below is scoped to html.bs-halloween, which the script only adds inside the date window.
+   Deliberately no CSS variables and no blanket text-color rules: content areas keep their original
+   (white) backgrounds and text colors; only the blue/green accents are swapped for orange/purple. */
 
-html.bs-halloween{
-  --hw-orange:#ff7a18; --hw-orange-deep:#c2410c; --hw-orange-soft:#ffb347;
-  --hw-purple:#7b2cbf; --hw-purple-deep:#2a0a4a; --hw-ink:#f6eefc; --hw-panel:#120a1c; --hw-line:#3a2457;
-  --hw-grad:linear-gradient(90deg,var(--hw-orange),var(--hw-purple));
-  --hw-grad-diag:linear-gradient(135deg,var(--hw-orange),var(--hw-purple));
-
-  /* SharePoint's own theme variables: recolors anything that uses the site theme (blue -> orange) */
-  --themePrimary:#ff7a18; --themeDarkAlt:#e8680c; --themeDark:#c2410c; --themeDarker:#9a3412;
-  --themeSecondary:#ff8f3a; --themeTertiary:#ffb347; --themeLight:#3a2457; --themeLighter:#2a0a4a; --themeLighterAlt:#120a1c;
-  --bodyBackground:#000;
-}
-
-/* ---------- Page background: black in the side margins only ----------
-   Only the page chrome behind the content is blackened. The content zones/sections keep their original background. */
+/* ---------- Page background: black in the side margins only ---------- */
 html.bs-halloween,
 html.bs-halloween body,
 html.bs-halloween #spPageChromeAppDiv,
@@ -30,12 +19,17 @@ html.bs-halloween [data-automation-id="contentScrollRegion"]{
   background-color:#000 !important;
 }
 
-/* ---------- Text ---------- */
-html.bs-halloween h1,html.bs-halloween h2,html.bs-halloween h3,html.bs-halloween h4,
+/* ---------- SharePoint theme colors: blue -> orange ---------- */
+html.bs-halloween{
+  --themePrimary:#ff7a18; --themeDarkAlt:#e8680c; --themeDark:#c2410c; --themeDarker:#9a3412;
+  --themeSecondary:#ff8f3a; --themeTertiary:#ffb347;
+}
+
+/* ---------- Headings and links on the (white) content area ---------- */
 html.bs-halloween [data-automation-id="webPartHeader"],
-html.bs-halloween [class*="webPartHeader"]{color:var(--hw-orange-soft) !important}
-html.bs-halloween a{color:var(--hw-orange-soft)}
-html.bs-halloween a:hover{color:#fff}
+html.bs-halloween [class*="webPartHeader"]{color:#c2410c !important}
+html.bs-halloween a{color:#c2410c}
+html.bs-halloween a:hover{color:#7b2cbf}
 
 /* ---------- Site header / suite bar ---------- */
 html.bs-halloween [aria-label="SharePoint Site Header"],
@@ -43,32 +37,20 @@ html.bs-halloween #spSiteHeader,
 html.bs-halloween #O365_NavHeader,
 html.bs-halloween #SuiteNavWrapper,
 html.bs-halloween [data-automation-id="SiteHeader"]{
-  background:linear-gradient(90deg,#000 0%,var(--hw-purple-deep) 55%,var(--hw-orange-deep) 100%) !important;
-  border-bottom:1px solid var(--hw-orange) !important;
+  background:linear-gradient(90deg,#000 0%,#2a0a4a 55%,#c2410c 100%) !important;
+  border-bottom:1px solid #ff7a18 !important;
 }
 html.bs-halloween .SiteHeaderTitleMinimal,
 html.bs-halloween [class*="SiteHeaderTitle"]{
   font-family:"Creepster","Chiller",fantasy !important; letter-spacing:.04em;
-  color:var(--hw-orange) !important; text-shadow:0 0 14px rgba(255,122,24,.65);
+  color:#ff7a18 !important; text-shadow:0 0 14px rgba(255,122,24,.65);
 }
 
-/* ---------- Tabs ---------- */
-html.bs-halloween .addui-Tabs-tab{color:var(--hw-ink) !important; background:var(--hw-panel) !important; border-color:var(--hw-line) !important}
-html.bs-halloween .addui-Tabs-tab.addui-Tabs-active{
-  background:var(--hw-grad) !important; color:#fff !important; border-color:var(--hw-orange) !important;
-  box-shadow:0 0 14px rgba(255,122,24,.45);
-}
+/* ---------- Custom tab bar: recolor text and accent only ---------- */
+html.bs-halloween .addui-Tabs-tab{color:#c2410c !important}
+html.bs-halloween .addui-Tabs-tab.addui-Tabs-active{color:#7b2cbf !important; border-color:#ff7a18 !important}
 
-/* ---------- Blue borders / dividers -> orange-to-purple ---------- */
-html.bs-halloween div [class^="n_io"],
-html.bs-halloween [class*="sectionContainer"] > div,
-html.bs-halloween .overlayContainer-528,
-html.bs-halloween #overlayContainer-528{
-  border-color:var(--hw-orange) !important;
-}
-
-/* ---------- Quick links / button cards ----------
-   Only the tile (border, background, glow) is themed. Icon images/SVGs are left exactly as they are. */
+/* ---------- Quick links / button cards (icons are never touched) ---------- */
 html.bs-halloween .ButtonCard,
 html.bs-halloween #ButtonCard,
 html.bs-halloween [class*="ButtonCard"],
@@ -76,8 +58,8 @@ html.bs-halloween .buttoncard,
 html.bs-halloween [data-automation-id="button-card"],
 html.bs-halloween .root-103,
 html.bs-halloween #button_webpart{
-  background:linear-gradient(var(--hw-panel),var(--hw-panel)) padding-box,var(--hw-grad) border-box !important;
-  border:1px solid transparent !important; border-radius:10px; color:var(--hw-ink) !important;
+  background:linear-gradient(#120a1c,#120a1c) padding-box,linear-gradient(90deg,#ff7a18,#7b2cbf) border-box !important;
+  border:1px solid transparent !important; border-radius:10px;
   box-shadow:none !important; transition:transform .15s ease, box-shadow .15s ease;
 }
 html.bs-halloween .ButtonCard:hover,
@@ -88,59 +70,41 @@ html.bs-halloween [data-automation-id="button-card"]:hover{
 }
 html.bs-halloween .ButtonCard *:not(img):not(svg):not(svg *),
 html.bs-halloween [class*="ButtonCard"] *:not(img):not(svg):not(svg *),
-html.bs-halloween [data-automation-id="button-card"] *:not(img):not(svg):not(svg *){color:var(--hw-ink) !important}
-/* belt and braces: never filter/recolor the icons */
+html.bs-halloween [data-automation-id="button-card"] *:not(img):not(svg):not(svg *){color:#f6eefc !important}
 html.bs-halloween [class*="ButtonCard"] img,
 html.bs-halloween [data-automation-id="button-card"] img,
 html.bs-halloween .buttoncard img{filter:none !important; mix-blend-mode:normal !important; opacity:1 !important}
 
-/* ---------- News, captions, command bars ---------- */
+/* ---------- News ---------- */
 html.bs-halloween #carouselItemWrapper,
 html.bs-halloween [automation-id="newsItem"],
-html.bs-halloween [data-automation-id="newsItem"]{border-color:var(--hw-orange) !important; background-color:var(--hw-panel) !important}
+html.bs-halloween [data-automation-id="newsItem"]{border-color:#ff7a18 !important}
 html.bs-halloween .CaptionElementView,
-html.bs-halloween .nil{background:linear-gradient(180deg,rgba(42,10,74,.85),rgba(194,65,12,.9)) !important; color:#fff !important}
-html.bs-halloween div[role=menubar],
-html.bs-halloween .commandBarButtonHeightAndColor{background:var(--hw-panel) !important; color:var(--hw-orange-soft) !important}
+html.bs-halloween .nil{background:linear-gradient(180deg,rgba(42,10,74,.85),rgba(194,65,12,.9)) !important}
 
-/* ---------- Your custom gradient / frame web parts ---------- */
+/* ---------- Custom frames (Connect/Refer/Win etc.): swap the blue->green frame for orange->purple.
+   Their white insides and dark text are left exactly as they are. ---------- */
 html.bs-halloween #gradA,
-html.bs-halloween #grad9,
-html.bs-halloween .taierframe .grador,
-html.bs-halloween .innergrad,
-html.bs-halloween [class^="bst-ai"],
-html.bs-halloween [class*=" bst-ai"]{
-  background:linear-gradient(var(--hw-panel),var(--hw-panel)) padding-box,var(--hw-grad) border-box !important;
-  border-color:transparent !important; border-width:1px !important; box-shadow:0 0 14px rgba(123,44,191,.3) !important;
+html.bs-halloween #grad9{
+  background-color:#ff7a18 !important;
+  background-image:linear-gradient(to right,#ff7a18,#7b2cbf) !important;
 }
 html.bs-halloween .gradient-text0{
-  background:var(--hw-grad) !important; -webkit-background-clip:text !important; background-clip:text !important;
-  -webkit-text-fill-color:transparent !important; color:transparent !important;
+  background:-webkit-linear-gradient(45deg,#ff7a18,#7b2cbf) !important;
+  -webkit-background-clip:text !important; background-clip:text !important;
+  -webkit-text-fill-color:transparent !important;
 }
-/* flu card: swap the green glow for orange (keeps its own shimmer animation) */
+
+/* ---------- AI Assist Pre-Prompt: outer frame gradient + Copy button + link only ---------- */
+html.bs-halloween .bst-ai{background:linear-gradient(to right,#ff7a18,#7b2cbf) !important}
+html.bs-halloween .bst-ai-title a{color:#c2410c !important}
+html.bs-halloween .bst-ai-copy{background:#c2410c !important; border-color:#c2410c !important}
+html.bs-halloween .bst-ai-copy:hover{background:#ff7a18 !important}
+
+/* ---------- Flu vaccine card: swap the green glow for orange ---------- */
 html.bs-halloween [id="f689d78c-6877-4ada-8172-90456fb047c2"]{
-  border-color:var(--hw-orange) !important; box-shadow:0 0 22px rgba(255,122,24,.55) !important;
+  border-color:#ff7a18 !important; box-shadow:0 0 22px rgba(255,122,24,.55) !important;
 }
-
-
-/* ---------- Custom tab bar + message bar text: readable on dark ---------- */
-html.bs-halloween [class*="Tabs-tab"],
-html.bs-halloween [class*="Tabs-tab"] *,
-html.bs-halloween .addui-Tabs *,
-html.bs-halloween #gradA,html.bs-halloween #gradA *,
-html.bs-halloween #grad9,html.bs-halloween #grad9 *,
-html.bs-halloween .taierframe .grador,html.bs-halloween .taierframe .grador *,
-html.bs-halloween .innergrad,html.bs-halloween .innergrad *{color:var(--hw-ink) !important}
-html.bs-halloween [class*="Tabs-active"],
-html.bs-halloween [class*="Tabs-active"] *{color:var(--hw-orange-soft) !important}
-html.bs-halloween #gradA a,html.bs-halloween #grad9 a,html.bs-halloween .innergrad a,
-html.bs-halloween #gradA a *,html.bs-halloween #grad9 a *,html.bs-halloween .innergrad a *{color:var(--hw-orange) !important}
-
-/* ---------- AI Assist Pre-Prompt widget: light text on the dark panel (buttons stay dark-on-light) ---------- */
-html.bs-halloween [class*="bst-ai"]{color:#f6eefc !important}
-html.bs-halloween [class*="bst-ai"] *{color:#f6eefc !important}
-html.bs-halloween [class*="bst-ai"] button,
-html.bs-halloween [class*="bst-ai"] button *{color:#1b1b1b !important}
 
 /* ---------- Spooky critters layer ---------- */
 #bs-hw-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:2147483000}
