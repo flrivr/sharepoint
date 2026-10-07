@@ -136,15 +136,11 @@ html.bs-halloween [class*="Tabs-active"] *{color:var(--hw-orange-soft) !importan
 html.bs-halloween #gradA a,html.bs-halloween #grad9 a,html.bs-halloween .innergrad a,
 html.bs-halloween #gradA a *,html.bs-halloween #grad9 a *,html.bs-halloween .innergrad a *{color:var(--hw-orange) !important}
 
-/* ---------- AI Assist Pre-Prompt widget (.bst-ai*): light text on the dark panel; buttons keep their own colors ---------- */
-html.bs-halloween [class*="bst-ai"]:not(button),
-html.bs-halloween [class*="bst-ai"] *:not(button):not(button *):not(svg):not(svg *),
-html.bs-halloween [class*="bst-ai"] textarea,
-html.bs-halloween [class*="bst-ai"] pre,
-html.bs-halloween [class*="bst-ai"] code{color:var(--hw-ink) !important; -webkit-text-fill-color:var(--hw-ink) !important}
-html.bs-halloween [class*="bst-ai"] ::placeholder{color:#cdb8e6 !important; opacity:1 !important; -webkit-text-fill-color:#cdb8e6 !important}
-html.bs-halloween [class*="bst-ai"] textarea,
-html.bs-halloween [class*="bst-ai"] pre{background-color:rgba(255,255,255,.06) !important}
+/* ---------- AI Assist Pre-Prompt widget: light text on the dark panel (buttons stay dark-on-light) ---------- */
+html.bs-halloween [class*="bst-ai"]{color:#f6eefc !important}
+html.bs-halloween [class*="bst-ai"] *{color:#f6eefc !important}
+html.bs-halloween [class*="bst-ai"] button,
+html.bs-halloween [class*="bst-ai"] button *{color:#1b1b1b !important}
 
 /* ---------- Spooky critters layer ---------- */
 #bs-hw-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:2147483000}
