@@ -1,0 +1,343 @@
+<!--
+  Quick Links -> Tabs  (paste into a Script Editor web part)
+  Reads the page's saved layout via REST (DOM-independent), builds tabs from every
+  Quick Links web part on the page, then hides the originals.
+-->
+<div id="qlt-root" class="qlt"></div>
+
+<style>
+  .qlt { font-family: "Segoe UI", system-ui, sans-serif; width: 100%; }
+  .qlt-tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 2px solid #c8c6c4; }
+  .qlt-tab {
+    background: #f3f2f1; border: 1px solid #c8c6c4; border-bottom: none;
+    padding: 9px 18px; cursor: pointer; font-size: 14px; color: #323130;
+    border-radius: 4px 4px 0 0; margin-bottom: -2px;
+  }
+  .qlt-tab:hover { background: #edebe9; }
+  .qlt-tab[aria-selected="true"] {
+    background: #fff; font-weight: 600; color: var(--themePrimary, #0078d4);
+    border-bottom: 2px solid #fff; border-top: 3px solid var(--themePrimary, #0078d4);
+  }
+  .qlt-panel { padding: 16px 4px; }
+  .qlt-panel[hidden] { display: none; }
+  .qlt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .qlt-link {
+    display: block; padding: 12px 14px; border: 1px solid #e1dfdd; border-radius: 4px;
+    text-decoration: none; color: #323130; background: #fff;
+  }
+  .qlt-link:hover { border-color: var(--themePrimary, #0078d4); box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  .qlt-link b { display: block; color: var(--themePrimary, #0078d4); }
+  .qlt-link span { display: block; font-size: 12px; color: #605e5c; margin-top: 3px; }
+  .qlt-msg { padding: 8px; color: #605e5c; font-size: 13px; }
+  /* editor tab */
+  .qlt-ed-bar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; background: #f3f2f1; border: 1px solid #c8c6c4; border-bottom: none; }
+  .qlt-ed-bar button, .qlt-ed-bar select, .qlt-ed-act button {
+    font: inherit; font-size: 13px; padding: 4px 9px; min-width: 30px; cursor: pointer;
+    background: #fff; border: 1px solid #c8c6c4; border-radius: 3px; color: #323130;
+  }
+  .qlt-ed-bar button:hover, .qlt-ed-act button:hover { background: #edebe9; }
+  .qlt-ed-bar input[type=color] { width: 32px; height: 28px; padding: 0; border: 1px solid #c8c6c4; background: #fff; cursor: pointer; }
+  .qlt-ed-sep { width: 1px; background: #c8c6c4; margin: 0 4px; }
+  .qlt-ed-form { display: none; gap: 6px; flex-wrap: wrap; align-items: center; padding: 8px; background: #faf9f8; border: 1px solid #c8c6c4; border-bottom: none; font-size: 13px; }
+  .qlt-ed-form.open { display: flex; }
+  .qlt-ed-form input { font: inherit; padding: 4px 6px; border: 1px solid #8a8886; border-radius: 3px; }
+  .qlt-ed-form input.wide { flex: 1; min-width: 220px; }
+  .qlt-ed-form input.narrow { width: 80px; }
+  .qlt-ed-area {
+    min-height: 260px; padding: 12px; border: 1px solid #c8c6c4; background: #fff; outline: none;
+    overflow: auto; resize: vertical;
+  }
+  .qlt-ed-area:focus { border-color: var(--themePrimary, #0078d4); }
+  .qlt-ed-area img { max-width: 100%; height: auto; }
+  .qlt-ed-area table { border-collapse: collapse; }
+  .qlt-ed-area td, .qlt-ed-area th { border: 1px solid #c8c6c4; padding: 4px 8px; }
+  .qlt-ed-src { display: none; width: 100%; box-sizing: border-box; min-height: 260px; padding: 10px; font: 12px/1.4 Consolas, monospace; border: 1px solid #c8c6c4; }
+  .qlt-ed-act { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+  .qlt-ed-act .primary { background: var(--themePrimary, #0078d4); color: #fff; border-color: transparent; }
+  .qlt-ed-act .primary:hover { filter: brightness(.92); background: var(--themePrimary, #0078d4); }
+  .qlt-ed-status { font-size: 13px; color: #107c10; }
+</style>
+
+<script>
+(function () {
+  // ---------- settings ----------
+  var HIDE_ORIGINALS = true;              // hide the Quick Links web parts that feed the tabs
+  var ONLY_SECTION_INDEX = null;          // e.g. 2 to use only Quick Links in that section; null = all
+  var QUICKLINKS_ID = 'c70391ea-0b10-4ee9-b2b4-006d3fcad0cd';
+  // -------------------------------
+
+  var root = document.getElementById('qlt-root');
+  var editing = /[?&]Mode=Edit/i.test(location.search);
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function safeUrl(u) {
+    return /^\s*javascript:/i.test(u || '') ? '#' : (u || '#');
+  }
+
+  function getCanvas() {
+    var web = (window._spPageContextInfo && _spPageContextInfo.webAbsoluteUrl) ||
+              location.origin + location.pathname.split('/SitePages/')[0];
+    var path = decodeURIComponent(location.pathname);
+    var url = web + "/_api/web/GetFileByServerRelativePath(decodedurl=@p)" +
+              "?@p='" + encodeURIComponent(path.replace(/'/g, "''")) + "'" +
+              "&$select=ListItemAllFields/CanvasContent1&$expand=ListItemAllFields";
+    return fetch(url, { headers: { Accept: 'application/json;odata=nometadata' }, credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error('REST ' + r.status); return r.json(); })
+      .then(function (j) { return JSON.parse(j.ListItemAllFields.CanvasContent1 || '[]'); });
+  }
+
+  function extract(controls) {
+    var out = [];
+    controls.forEach(function (c) {
+      if (c.webPartId !== QUICKLINKS_ID) return;
+      var pos = c.position || {};
+      if (ONLY_SECTION_INDEX != null && pos.sectionIndex !== ONLY_SECTION_INDEX) return;
+      var d = c.webPartData || {};
+      var p = d.properties || {};
+      var items = (p.items || []).map(function (i) {
+        var src = i.sourceItem || {};
+        return { title: i.title || i.altText || src.url, desc: i.description || '', url: src.url || i.url || '#' };
+      });
+      out.push({
+        instanceId: c.instanceId || c.id || d.instanceId,
+        title: p.title || d.title || '',
+        items: items,
+        z: pos.zoneIndex || 0, s: pos.sectionIndex || 0, k: pos.controlIndex || 0
+      });
+    });
+    out.sort(function (a, b) { return a.z - b.z || a.s - b.s || a.k - b.k; });
+    return out;
+  }
+
+  var TOOLBAR =
+    '<button data-cmd="bold" title="Bold"><b>B</b></button>' +
+    '<button data-cmd="italic" title="Italic"><i>I</i></button>' +
+    '<button data-cmd="underline" title="Underline"><u>U</u></button>' +
+    '<button data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>' +
+    '<span class="qlt-ed-sep"></span>' +
+    '<select data-block title="Style"><option value="p">Paragraph</option><option value="h1">Heading 1</option>' +
+      '<option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="h4">Heading 4</option>' +
+      '<option value="blockquote">Quote</option></select>' +
+    '<select data-size title="Font size"><option value="">Size</option><option value="2">Small</option>' +
+      '<option value="3">Normal</option><option value="5">Large</option><option value="6">X-Large</option></select>' +
+    '<label title="Text color"><input type="color" data-color="foreColor" value="#323130"></label>' +
+    '<label title="Highlight"><input type="color" data-color="hiliteColor" value="#ffff00"></label>' +
+    '<span class="qlt-ed-sep"></span>' +
+    '<button data-cmd="justifyLeft" title="Align left">&#8676;</button>' +
+    '<button data-cmd="justifyCenter" title="Center">&#8801;</button>' +
+    '<button data-cmd="justifyRight" title="Align right">&#8677;</button>' +
+    '<span class="qlt-ed-sep"></span>' +
+    '<button data-cmd="insertUnorderedList" title="Bullets">&bull; List</button>' +
+    '<button data-cmd="insertOrderedList" title="Numbers">1. List</button>' +
+    '<button data-cmd="outdent" title="Outdent">&larr;</button>' +
+    '<button data-cmd="indent" title="Indent">&rarr;</button>' +
+    '<span class="qlt-ed-sep"></span>' +
+    '<button data-form="link" title="Insert link">Link</button>' +
+    '<button data-form="image" title="Insert image from URL">Image</button>' +
+    '<button data-act="table" title="Insert table">Table</button>' +
+    '<button data-cmd="insertHorizontalRule" title="Divider">&mdash;</button>' +
+    '<span class="qlt-ed-sep"></span>' +
+    '<button data-cmd="undo" title="Undo">&#8630;</button>' +
+    '<button data-cmd="redo" title="Redo">&#8631;</button>' +
+    '<button data-cmd="removeFormat" title="Clear formatting">Clear</button>';
+
+  var EDITOR_PANEL =
+    '<div class="qlt-ed-bar">' + TOOLBAR + '</div>' +
+    '<div class="qlt-ed-form" data-formfor="link">URL <input class="wide" data-f="url" placeholder="https://…">' +
+      '<button data-apply="link">Apply</button><button data-close>Cancel</button></div>' +
+    '<div class="qlt-ed-form" data-formfor="image">Image URL <input class="wide" data-f="src" placeholder="https://…/picture.jpg">' +
+      'Alt text <input data-f="alt" placeholder="Description">' +
+      'Width <input class="narrow" data-f="w" placeholder="e.g. 300 or 50%">' +
+      '<button data-apply="image">Insert</button><button data-close>Cancel</button></div>' +
+    '<div class="qlt-ed-area" contenteditable="true" spellcheck="true"><p>Start typing here…</p></div>' +
+    '<textarea class="qlt-ed-src" spellcheck="false"></textarea>' +
+    '<div class="qlt-ed-act">' +
+      '<button class="primary" data-act="copy">Copy HTML</button>' +
+      '<button data-act="source">View / edit HTML</button>' +
+      '<button data-act="clear">Clear all</button>' +
+      '<span class="qlt-ed-status"></span></div>';
+
+  function render(groups) {
+    var tabs = '<div class="qlt-tabs" role="tablist">';
+    var panels = '';
+    groups.forEach(function (g, n) {
+      var label = g.title && g.title !== 'Quick links' ? g.title : 'Tab ' + (n + 1);
+      tabs += '<button type="button" class="qlt-tab" role="tab" data-i="' + n + '" aria-selected="' + (n === 0) + '">' + esc(label) + '</button>';
+      panels += '<div class="qlt-panel" role="tabpanel" data-i="' + n + '"' + (n ? ' hidden' : '') + '><div class="qlt-grid">' +
+        g.items.map(function (i) {
+          return '<a class="qlt-link" href="' + esc(safeUrl(i.url)) + '">' +
+                 '<b>' + esc(i.title) + '</b>' + (i.desc ? '<span>' + esc(i.desc) + '</span>' : '') + '</a>';
+        }).join('') + '</div></div>';
+    });
+    // HTML editor tab (always last)
+    var e = groups.length;
+    tabs += '<button type="button" class="qlt-tab" role="tab" data-i="' + e + '" aria-selected="' + (e === 0) + '">&#9998; HTML Editor</button>';
+    panels += '<div class="qlt-panel qlt-editor" role="tabpanel" data-i="' + e + '"' + (e ? ' hidden' : '') + '>' + EDITOR_PANEL + '</div>';
+    root.innerHTML = tabs + '</div>' + panels;
+
+    root.addEventListener('click', function (ev) {
+      var t = ev.target.closest('.qlt-tab');
+      if (!t) return;
+      var i = t.getAttribute('data-i');
+      [].forEach.call(root.querySelectorAll('.qlt-tab'), function (b) {
+        b.setAttribute('aria-selected', b === t);
+      });
+      [].forEach.call(root.querySelectorAll('.qlt-panel'), function (p) {
+        p.hidden = p.getAttribute('data-i') !== i;
+      });
+    });
+    initEditor(root.querySelector('.qlt-editor'));
+  }
+
+  // ---------- HTML editor ----------
+  function sanitize(html) {
+    var doc = new DOMParser().parseFromString('<body>' + html, 'text/html');
+    [].forEach.call(doc.body.querySelectorAll('script,style,iframe,object,embed,link,meta,form,base'), function (n) { n.remove(); });
+    [].forEach.call(doc.body.querySelectorAll('*'), function (n) {
+      [].slice.call(n.attributes).forEach(function (a) {
+        var name = a.name.toLowerCase();
+        if (/^on/.test(name) || name === 'class' && /^Mso/.test(a.value) ||
+            (/^(href|src|xlink:href)$/.test(name) && /^\s*(javascript|vbscript):/i.test(a.value)) ||
+            (name === 'src' && /^\s*data:(?!image\/)/i.test(a.value))) n.removeAttribute(a.name);
+      });
+    });
+    return doc.body.innerHTML;
+  }
+
+  function initEditor(ed) {
+    var area = ed.querySelector('.qlt-ed-area');
+    var src = ed.querySelector('.qlt-ed-src');
+    var status = ed.querySelector('.qlt-ed-status');
+    var saved = null;
+
+    function say(m) { status.textContent = m; setTimeout(function () { status.textContent = ''; }, 2500); }
+    function html() {
+      var c = area.cloneNode(true);
+      c.removeAttribute('contenteditable'); c.removeAttribute('spellcheck');
+      return c.innerHTML.trim();
+    }
+    function keepSel() {
+      var s = getSelection();
+      if (s.rangeCount && area.contains(s.anchorNode)) saved = s.getRangeAt(0).cloneRange();
+    }
+    function restoreSel() {
+      area.focus();
+      if (saved) { var s = getSelection(); s.removeAllRanges(); s.addRange(saved); }
+    }
+    function exec(cmd, val) { restoreSel(); document.execCommand(cmd, false, val || null); keepSel(); }
+    function validUrl(u) { return /^(https?:\/\/|\/|mailto:)/i.test(u); }
+
+    try { document.execCommand('styleWithCSS', false, true); } catch (x) {}
+    ['keyup', 'mouseup', 'input'].forEach(function (n) { area.addEventListener(n, keepSel); });
+
+    area.addEventListener('paste', function (e) {
+      var cd = e.clipboardData; if (!cd) return;
+      e.preventDefault();
+      var h = cd.getData('text/html');
+      if (h) document.execCommand('insertHTML', false, sanitize(h));
+      else document.execCommand('insertText', false, cd.getData('text/plain'));
+    });
+
+    // keep editor selection when clicking toolbar controls
+    ed.querySelector('.qlt-ed-bar').addEventListener('mousedown', function (e) {
+      if (!/^(SELECT|INPUT|OPTION)$/.test(e.target.tagName)) e.preventDefault();
+    });
+
+    ed.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.cmd) { exec(b.dataset.cmd); return; }
+      if (b.dataset.form) {
+        keepSel();
+        [].forEach.call(ed.querySelectorAll('.qlt-ed-form'), function (f) {
+          f.classList.toggle('open', f.dataset.formfor === b.dataset.form && !f.classList.contains('open'));
+        });
+        var f = ed.querySelector('.qlt-ed-form.open input'); if (f) f.focus();
+        return;
+      }
+      if (b.hasAttribute('data-close')) { b.closest('.qlt-ed-form').classList.remove('open'); return; }
+      if (b.dataset.apply === 'link') {
+        var u = ed.querySelector('[data-formfor=link] [data-f=url]').value.trim();
+        if (!validUrl(u)) { say('Enter a full URL (https://…)'); return; }
+        exec('createLink', u);
+        [].forEach.call(area.querySelectorAll('a[href]'), function (a) { if (a.getAttribute('href') === u && !/^\//.test(u)) a.target = '_blank'; });
+        b.closest('.qlt-ed-form').classList.remove('open');
+        return;
+      }
+      if (b.dataset.apply === 'image') {
+        var fm = b.closest('.qlt-ed-form');
+        var s = fm.querySelector('[data-f=src]').value.trim();
+        var alt = fm.querySelector('[data-f=alt]').value.trim();
+        var w = fm.querySelector('[data-f=w]').value.trim();
+        if (!/^(https?:\/\/|\/)/i.test(s)) { say('Enter a full image URL (https://…)'); return; }
+        var style = 'max-width:100%;height:auto;' + (w ? 'width:' + (/^\d+$/.test(w) ? w + 'px' : w.replace(/[^0-9a-z%.]/gi, '')) + ';' : '');
+        exec('insertHTML', '<img id="qlt-new-img" src="' + esc(s) + '" alt="' + esc(alt) + '">');
+        var im = area.querySelector('#qlt-new-img');   // set style afterwards; insertHTML drops some properties
+        if (im) { im.removeAttribute('id'); im.setAttribute('style', style); }
+        fm.querySelectorAll('input').forEach(function (i) { i.value = ''; });
+        fm.classList.remove('open');
+        return;
+      }
+      var act = b.dataset.act;
+      if (act === 'table') {
+        var r = parseInt(prompt('Rows?', '3'), 10), c = parseInt(prompt('Columns?', '3'), 10);
+        if (!(r > 0 && c > 0)) return;
+        var t = '<table style="border-collapse:collapse;width:100%"><tbody>';
+        for (var i = 0; i < r; i++) {
+          t += '<tr>';
+          for (var j = 0; j < c; j++) t += '<td style="border:1px solid #c8c6c4;padding:4px 8px">&nbsp;</td>';
+          t += '</tr>';
+        }
+        exec('insertHTML', t + '</tbody></table><p></p>');
+      } else if (act === 'copy') {
+        if (src.style.display === 'block') area.innerHTML = sanitize(src.value);
+        var out = html();
+        var done = function () { say('HTML copied to clipboard'); };
+        var fallback = function () {
+          var ta = document.createElement('textarea'); ta.value = out; document.body.appendChild(ta);
+          ta.select(); try { document.execCommand('copy'); done(); } catch (x) { say('Copy failed – use View / edit HTML'); }
+          ta.remove();
+        };
+        if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(out).then(done, fallback);
+        else fallback();
+      } else if (act === 'source') {
+        var showing = src.style.display === 'block';
+        if (showing) { area.innerHTML = sanitize(src.value); src.style.display = 'none'; area.style.display = ''; b.textContent = 'View / edit HTML'; }
+        else { src.value = html(); src.style.display = 'block'; area.style.display = 'none'; b.textContent = 'Back to visual editor'; }
+      } else if (act === 'clear') {
+        if (confirm('Clear everything in the editor?')) { area.innerHTML = '<p><br></p>'; src.value = ''; }
+      }
+    });
+
+    ed.addEventListener('change', function (e) {
+      var t = e.target;
+      if (t.hasAttribute('data-block')) exec('formatBlock', t.value);
+      else if (t.hasAttribute('data-size')) { if (t.value) exec('fontSize', t.value); t.value = ''; }
+      else if (t.dataset.color) exec(t.dataset.color, t.value);
+    });
+  }
+
+  function hide(groups) {
+    if (!HIDE_ORIGINALS || editing) return;
+    var css = groups.map(function (g) {
+      return g.instanceId ? '[data-sp-feature-instance-id="' + g.instanceId + '"]{display:none!important}' : '';
+    }).join('');
+    var st = document.createElement('style');
+    st.textContent = css;
+    document.head.appendChild(st);
+  }
+
+  root.innerHTML = '<div class="qlt-msg">Loading tabs…</div>';
+  getCanvas().then(function (controls) {
+    var groups = extract(controls);
+    render(groups);
+    hide(groups);
+  }).catch(function (err) {
+    render([]);   // still give them the HTML editor
+    root.insertAdjacentHTML('afterbegin', '<div class="qlt-msg">Could not load Quick Links tabs (' + esc(err.message) + ').</div>');
+  });
+})();
+</script>
