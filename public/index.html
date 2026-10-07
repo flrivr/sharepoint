@@ -101,6 +101,10 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .field input[type="range"] { padding: 0; }
 .group > .field, .panel > .field { flex: 0 0 auto; }
 .hm-scale { position: relative; }
+.mb-page { width: 100%; border-radius: 4px; overflow: hidden; background: #fff; }
+.mb-suite { height: 34px; background: #0b2a5b; color: #cfe0ff; font-size: 12px; display: flex; align-items: center; padding: 0 12px; }
+.mb-head { height: 64px; background: linear-gradient(90deg, #00194A, #0b4fb3 60%, #0271EB); color: #fff; display: flex; align-items: center; padding: 0 18px; font-size: 22px; font-weight: 300; white-space: nowrap; }
+.mb-body { height: 36px; background: #faf9f8; }
 </style>
 
 </head>
@@ -108,12 +112,13 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 <div class="wrap">
   <header>
     <h1>Alert Panel Builder</h1>
-    <p>Two tools for the Bridgeton Strong site: build a gradient alert panel for a content web part, or update the header message script. Sample text is a placeholder to replace.</p>
+    <p>Tools for the Bridgeton Strong site: a gradient alert panel for a content web part, the header message script, and a message bar above the site header. Sample text is a placeholder to replace.</p>
   </header>
 
   <div class="tabs" role="tablist" aria-label="Builders">
     <button type="button" class="tab" role="tab" id="tab-alert" aria-selected="true" aria-controls="panel-alert">Alert panel</button>
     <button type="button" class="tab" role="tab" id="tab-header" aria-selected="false" aria-controls="panel-header" tabindex="-1">Header message</button>
+    <button type="button" class="tab" role="tab" id="tab-msgbar" aria-selected="false" aria-controls="panel-msgbar" tabindex="-1">Message bar</button>
   </div>
 
   <div id="panel-alert" role="tabpanel" aria-labelledby="tab-alert">
@@ -304,6 +309,100 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
             <li>Open Site Assets on the Bridgeton Strong site and replace <b>header-message.js</b>: upload a file with the same name and choose Replace, or edit it in place if your library allows it.</li>
             <li>Refresh the page with Ctrl+F5. The script line on your pages stays the same.</li>
           </ol>
+        </section>
+      </div>
+    </div>
+  </div>
+  <div id="panel-msgbar" role="tabpanel" aria-labelledby="tab-msgbar" hidden>
+    <div class="cols">
+      <form class="panel" id="mb-controls" onsubmit="return false">
+        <div class="group">
+          <h2>Message</h2>
+          <div class="field"><label for="mb-type">Type (sets icon and colors)</label>
+            <select id="mb-type">
+              <option value="info">Info</option>
+              <option value="warning">Warning</option>
+              <option value="severe">Severe warning</option>
+              <option value="error">Error</option>
+              <option value="success">Success</option>
+              <option value="blocked">Blocked</option>
+              <option value="custom">Custom (keep my colors)</option>
+            </select>
+          </div>
+          <div class="field"><label for="mb-before">Text before the link</label><input type="text" id="mb-before" value="System maintenance is planned for Saturday night. Read the"></div>
+          <div class="row">
+            <div class="field"><label for="mb-ltext">Link text (optional)</label><input type="text" id="mb-ltext" value="details here"></div>
+            <div class="field"><label for="mb-lurl">Link address</label><input type="url" id="mb-lurl" value="https://example.com/details"></div>
+          </div>
+          <p class="note" id="mb-link-note" hidden>The link needs an address that starts with https://, http://, mailto: or /. It is left out until you fix it.</p>
+          <div class="field"><label for="mb-after">Text after the link</label><input type="text" id="mb-after" value="."></div>
+          <label class="check"><input type="checkbox" id="mb-newtab" checked> Open the link in a new tab</label>
+          <label class="check"><input type="checkbox" id="mb-dismiss" checked> Show a close button (stays closed for the browser session)</label>
+        </div>
+        <div class="group">
+          <h2>Look</h2>
+          <div class="field"><label for="mb-icon">Icon</label>
+            <select id="mb-icon">
+              <option value="info">Info</option>
+              <option value="warning">Warning</option>
+              <option value="error">Error</option>
+              <option value="success">Success</option>
+              <option value="blocked">Blocked</option>
+              <option value="none">No icon</option>
+            </select>
+          </div>
+          <div class="row">
+            <div class="field"><span class="lbl">Background</span><div class="color"><input type="color" id="mb-bg" value="#f3f2f1" aria-label="Background color"><input type="text" id="mb-bg-hex" value="#F3F2F1" aria-label="Background hex"></div></div>
+            <div class="field"><span class="lbl">Text color</span><div class="color"><input type="color" id="mb-tc" value="#323130" aria-label="Text color"><input type="text" id="mb-tc-hex" value="#323130" aria-label="Text hex"></div></div>
+          </div>
+          <div class="row">
+            <div class="field"><span class="lbl">Link color</span><div class="color"><input type="color" id="mb-lc" value="#005a9e" aria-label="Link color"><input type="text" id="mb-lc-hex" value="#005A9E" aria-label="Link hex"></div></div>
+            <div class="field"><span class="lbl">Icon color</span><div class="color"><input type="color" id="mb-ic" value="#0078d4" aria-label="Icon color"><input type="text" id="mb-ic-hex" value="#0078D4" aria-label="Icon hex"></div></div>
+          </div>
+          <div class="row">
+            <div class="field"><label for="mb-font">Font</label>
+              <select id="mb-font">
+                <option value="segoe">Segoe UI (SharePoint default)</option>
+                <option value="spectrum">Spectrum Sans (your other panels)</option>
+              </select>
+            </div>
+            <div class="field narrow"><label for="mb-size">Size px</label><input type="number" id="mb-size" min="10" max="32" value="14"></div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Files</h2>
+          <div class="field"><label for="mb-mode">Output</label>
+            <select id="mb-mode">
+              <option value="js">JavaScript only (one file)</option>
+              <option value="jscss">JavaScript + CSS (two files)</option>
+            </select>
+          </div>
+          <div class="field" id="mb-cssurl-wrap" hidden><label for="mb-cssurl">Where the CSS file will live</label><input type="text" id="mb-cssurl" value="/sites/BridgetonStrong/SiteAssets/message-bar.css"></div>
+          <p class="note">CSS alone cannot add a link or place the bar above the header, so the JavaScript is always included. The two-file option moves the colors and fonts into a CSS file you can edit without touching the script.</p>
+        </div>
+      </form>
+      <div class="right">
+        <section class="panel" aria-label="Message bar preview">
+          <div class="head"><h2>Preview</h2>
+            <div class="field narrow" style="flex-basis:150px"><label for="mb-pw">Screen</label>
+              <select id="mb-pw"><option value="">Desktop</option><option value="700">Tablet</option><option value="400">Phone</option></select>
+            </div>
+          </div>
+          <div class="hm-stage" style="overflow-x:auto"><div class="mb-page" id="mb-page"><div class="mb-suite">Microsoft 365 bar</div><div id="mb-slot"></div><div class="mb-head">Bridgeton Strong</div><div class="mb-body"></div></div></div>
+          <p class="note">The bar is inserted just above the site header, below the Microsoft 365 bar. The mock header is only a stand-in.</p>
+        </section>
+        <section class="panel" aria-label="Generated JavaScript">
+          <div class="head"><h2>message-bar.js</h2><button type="button" class="primary" id="mb-copy-js">Copy JavaScript</button></div>
+          <textarea class="code" id="mb-out-js" readonly spellcheck="false" aria-label="Generated message-bar.js" style="min-height:300px"></textarea>
+          <div class="status" id="mb-status-js" role="status" aria-live="polite"></div>
+        </section>
+        <section class="panel" id="mb-css-panel" aria-label="Generated CSS" hidden>
+          <div class="head"><h2>message-bar.css</h2><button type="button" class="primary" id="mb-copy-css">Copy CSS</button></div>
+          <textarea class="code" id="mb-out-css" readonly spellcheck="false" aria-label="Generated message-bar.css" style="min-height:220px"></textarea>
+          <div class="status" id="mb-status-css" role="status" aria-live="polite"></div>
+        </section>
+        <section class="panel" aria-label="How to install">
+          <ol class="steps" id="mb-steps"></ol>
         </section>
       </div>
     </div>
@@ -783,7 +882,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   });
 
   // tabs
-  var tabs = [['tab-alert', 'panel-alert'], ['tab-header', 'panel-header']];
+  var tabs = [['tab-alert', 'panel-alert'], ['tab-header', 'panel-header'], ['tab-msgbar', 'panel-msgbar']];
   function show(i) {
     tabs.forEach(function (p, j) {
       $(p[0]).setAttribute('aria-selected', j === i ? 'true' : 'false');
@@ -791,6 +890,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
       $(p[1]).hidden = j !== i;
     });
     if (i === 1) render();
+    if (i === 2 && window.__renderMsgBar) window.__renderMsgBar();
   }
   tabs.forEach(function (p, i) {
     $(p[0]).addEventListener('click', function () { show(i); });
@@ -802,6 +902,310 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     });
   });
   window.addEventListener('resize', function () { if (!$('panel-header').hidden) render(); });
+  render();
+})();
+
+(function () {
+  function $(id) { return document.getElementById(id); }
+  function hex(v, f) {
+    v = String(v).trim();
+    if (/^[0-9a-f]{6}$/i.test(v)) v = '#' + v;
+    return /^#[0-9a-f]{6}$/i.test(v) ? v.toUpperCase() : f;
+  }
+  function num(id, min, max, d) {
+    var n = parseInt($(id).value, 10);
+    if (isNaN(n)) n = d;
+    return Math.max(min, Math.min(max, n));
+  }
+  function jsq(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' '); }
+
+  var ICONS = {
+    info: '<circle cx="8" cy="8" r="6.75" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7.25" y="7" width="1.5" height="4.5" fill="currentColor"/><circle cx="8" cy="4.8" r="1" fill="currentColor"/>',
+    warning: '<path d="M8 1.8L14.8 13.8H1.2Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><rect x="7.25" y="6" width="1.5" height="4" fill="currentColor"/><circle cx="8" cy="11.9" r="0.95" fill="currentColor"/>',
+    error: '<circle cx="8" cy="8" r="6.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.4 5.4L10.6 10.6M10.6 5.4L5.4 10.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+    success: '<circle cx="8" cy="8" r="6.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4.9 8.2L7.1 10.4L11.2 5.9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    blocked: '<circle cx="8" cy="8" r="6.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.4 12.6L12.6 3.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>'
+  };
+  var TYPES = {
+    info:    { icon: 'info',    bg: '#F3F2F1', text: '#323130', link: '#005A9E', ic: '#0078D4' },
+    warning: { icon: 'warning', bg: '#FFF4CE', text: '#323130', link: '#005A9E', ic: '#797775' },
+    severe:  { icon: 'warning', bg: '#FED9CC', text: '#323130', link: '#005A9E', ic: '#D83B01' },
+    error:   { icon: 'error',   bg: '#FDE7E9', text: '#323130', link: '#005A9E', ic: '#A80000' },
+    success: { icon: 'success', bg: '#DFF6DD', text: '#323130', link: '#005A9E', ic: '#107C10' },
+    blocked: { icon: 'blocked', bg: '#FDE7E9', text: '#323130', link: '#005A9E', ic: '#A80000' }
+  };
+  var FONTS = {
+    segoe: '"Segoe UI","Segoe UI Web (West European)",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",sans-serif',
+    spectrum: '"Spectrum Sans Light","Spectrum Sans","Segoe UI",sans-serif'
+  };
+  var CLOSE_SVG = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false"><path d="M3 3L13 13M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>';
+
+  var CSS_LINES = [
+    '#bst-msgbar{box-sizing:border-box;display:flex;align-items:flex-start;gap:10px;width:100%;padding:10px 14px;background:{{BG}};color:{{TEXT}};font-family:{{FONT}};font-size:{{SIZE}};line-height:1.45;}',
+    '#bst-msgbar .bst-msgbar-icon{flex:none;display:flex;align-items:center;height:1.45em;color:{{ICONCOLOR}};}',
+    '#bst-msgbar .bst-msgbar-icon svg{width:1.15em;height:1.15em;display:block;}',
+    '#bst-msgbar .bst-msgbar-text{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;}',
+    '#bst-msgbar a{color:{{LINK}} !important;font-weight:600;text-decoration:underline;}',
+    '#bst-msgbar a:hover{text-decoration:none;}',
+    '#bst-msgbar a:focus-visible{outline:2px solid {{LINK}};outline-offset:2px;}',
+    '#bst-msgbar .bst-msgbar-close{flex:none;display:flex;align-items:center;justify-content:center;width:28px;height:28px;margin:-4px -6px -4px 0;padding:0;border:0;border-radius:2px;background:transparent;color:{{TEXT}};cursor:pointer;}',
+    '#bst-msgbar .bst-msgbar-close:hover{background:rgba(0,0,0,.08);}',
+    '#bst-msgbar .bst-msgbar-close:focus-visible{outline:2px solid {{TEXT}};outline-offset:-2px;}'
+  ];
+  var JS_VARS = { BG: 'BACKGROUND', TEXT: 'TEXT_COLOR', LINK: 'LINK_COLOR', ICONCOLOR: 'ICON_COLOR', FONT: 'FONT', SIZE: 'FONT_SIZE' };
+
+  function vals() {
+    var before = $('mb-before').value.replace(/\s+$/, '');
+    if (before) before += ' ';
+    var after = $('mb-after').value.replace(/^\s+/, '');
+    if (after && !/^[.,;:!?)\]]/.test(after)) after = ' ' + after;
+    var url = $('mb-lurl').value.trim(), bad = false;
+    if (/^www\./i.test(url)) url = 'https://' + url;
+    if (url && !/^(https?:\/\/|mailto:|\/|#)/i.test(url)) { bad = true; url = ''; }
+    $('mb-link-note').hidden = !bad;
+    var cssurl = $('mb-cssurl').value.trim() || '/sites/BridgetonStrong/SiteAssets/message-bar.css';
+    return {
+      before: before, ltext: $('mb-ltext').value.trim(), url: url, after: after,
+      newtab: $('mb-newtab').checked, dismiss: $('mb-dismiss').checked,
+      icon: $('mb-icon').value,
+      bg: hex($('mb-bg-hex').value, '#F3F2F1'), text: hex($('mb-tc-hex').value, '#323130'),
+      link: hex($('mb-lc-hex').value, '#005A9E'), ic: hex($('mb-ic-hex').value, '#0078D4'),
+      fontKey: $('mb-font').value, size: num('mb-size', 10, 32, 14),
+      mode: $('mb-mode').value, cssurl: cssurl
+    };
+  }
+
+  function cssFile(v) {
+    var map = { BG: v.bg, TEXT: v.text, LINK: v.link, ICONCOLOR: v.ic, FONT: FONTS[v.fontKey], SIZE: v.size + 'px' };
+    return CSS_LINES.map(function (l) { return l.replace(/\{\{(\w+)\}\}/g, function (m, k) { return map[k]; }); }).join('\n');
+  }
+  function cssEmbedded() {
+    return CSS_LINES.map(function (l) {
+      var s = jsq(l).replace(/\{\{(\w+)\}\}/g, function (m, k) { return "' + " + JS_VARS[k] + " + '"; });
+      return "    '" + s + "'";
+    }).join(' +\n');
+  }
+
+  var BODY = `
+  if (window.__bstMsgBar) return;
+  window.__bstMsgBar = true;
+
+@@STYLE@@
+
+  var ICONS = {
+@@ICONS@@
+  };
+
+  function hash(s) {
+    var h = 0, i;
+    for (i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; }
+    return h;
+  }
+  var KEY = 'bstMsgBarClosed' + hash(BEFORE + LINK_TEXT + LINK_URL + AFTER);
+  var closed = false;
+  try { closed = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
+
+  function add() {
+    if (closed || document.getElementById('bst-msgbar')) return;
+    var header = document.querySelector('#spSiteHeader, [aria-label="SharePoint Site Header"]');
+    if (!header || !header.parentNode) return;
+
+    var bar = document.createElement('div');
+    bar.id = 'bst-msgbar';
+    bar.className = 'ms-MessageBar';
+    bar.setAttribute('role', 'status');
+
+    if (ICONS[ICON]) {
+      var ic = document.createElement('span');
+      ic.className = 'bst-msgbar-icon';
+      ic.setAttribute('aria-hidden', 'true');
+      ic.innerHTML = '<svg viewBox="0 0 16 16" focusable="false">' + ICONS[ICON] + '</svg>';
+      bar.appendChild(ic);
+    }
+
+    var tx = document.createElement('div');
+    tx.className = 'bst-msgbar-text';
+    tx.appendChild(document.createTextNode(BEFORE));
+    if (LINK_TEXT && LINK_URL) {
+      var a = document.createElement('a');
+      a.href = LINK_URL;
+      a.textContent = LINK_TEXT;
+      if (NEW_TAB) { a.target = '_blank'; a.rel = 'noopener'; }
+      tx.appendChild(a);
+    } else if (LINK_TEXT) {
+      tx.appendChild(document.createTextNode(LINK_TEXT));
+    }
+    tx.appendChild(document.createTextNode(AFTER));
+    bar.appendChild(tx);
+
+    if (DISMISSIBLE) {
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'bst-msgbar-close';
+      x.setAttribute('aria-label', 'Dismiss');
+      x.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false"><path d="M3 3L13 13M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>';
+      x.addEventListener('click', function () {
+        closed = true;
+        try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+        if (bar.parentNode) bar.parentNode.removeChild(bar);
+      });
+      bar.appendChild(x);
+    }
+
+    header.parentNode.insertBefore(bar, header);   // just above the site header
+  }
+
+  add();
+  setInterval(add, 1000);   // SharePoint can redraw the page; put the bar back if it does
+})();
+`;
+
+  function genJs(v) {
+    var L = [];
+    L.push('/* Message bar above the site header');
+    L.push('   Upload to Site Assets, then add one line to any script web part on the page:');
+    L.push('   <script src="/sites/BridgetonStrong/SiteAssets/message-bar.js"><\/script> */');
+    L.push('(function () {');
+    L.push('  /* ======================= SETTINGS ======================= */');
+    L.push("  var BEFORE      = '" + jsq(v.before) + "';");
+    L.push("  var LINK_TEXT   = '" + jsq(v.ltext) + "';");
+    L.push("  var LINK_URL    = '" + jsq(v.url) + "';");
+    L.push("  var AFTER       = '" + jsq(v.after) + "';");
+    L.push('  var NEW_TAB     = ' + (v.newtab ? 'true' : 'false') + ';');
+    L.push("  var ICON        = '" + v.icon + "';        // info | warning | error | success | blocked | none");
+    L.push('  var DISMISSIBLE = ' + (v.dismiss ? 'true' : 'false') + ';       // adds a close button; stays closed for the browser session');
+    var style;
+    if (v.mode === 'jscss') {
+      L.push("  var CSS_URL     = '" + jsq(v.cssurl) + "';   // colors and fonts live in this file");
+      style = "  var lk = document.createElement('link');\n  lk.rel = 'stylesheet';\n  lk.href = CSS_URL;\n  document.head.appendChild(lk);";
+    } else {
+      L.push("  var BACKGROUND  = '" + v.bg + "';");
+      L.push("  var TEXT_COLOR  = '" + v.text + "';");
+      L.push("  var LINK_COLOR  = '" + v.link + "';");
+      L.push("  var ICON_COLOR  = '" + v.ic + "';");
+      L.push("  var FONT        = '" + jsq(FONTS[v.fontKey]) + "';");
+      L.push("  var FONT_SIZE   = '" + v.size + "px';");
+      style = '  var CSS =\n' + cssEmbedded() + ';\n  var st = document.createElement(\'style\');\n  st.textContent = CSS;\n  document.head.appendChild(st);';
+    }
+    L.push('  /* ======================================================== */');
+    var icons = Object.keys(ICONS).map(function (k) { return "    " + k + ": '" + ICONS[k] + "'"; }).join(',\n');
+    var body = BODY.replace('@@STYLE@@', function () { return style; }).replace('@@ICONS@@', function () { return icons; });
+    return L.join('\n') + '\n' + body;
+  }
+  function genCss(v) {
+    return '/* Message bar styles. Upload to Site Assets next to message-bar.js */\n' + cssFile(v) + '\n';
+  }
+
+  function previewBar(v) {
+    $('mb-style').textContent = cssFile(v);
+    var slot = $('mb-slot');
+    slot.textContent = '';
+    var bar = document.createElement('div');
+    bar.id = 'bst-msgbar';
+    bar.className = 'ms-MessageBar';
+    if (ICONS[v.icon]) {
+      var ic = document.createElement('span');
+      ic.className = 'bst-msgbar-icon';
+      ic.innerHTML = '<svg viewBox="0 0 16 16" focusable="false">' + ICONS[v.icon] + '</svg>';
+      bar.appendChild(ic);
+    }
+    var tx = document.createElement('div');
+    tx.className = 'bst-msgbar-text';
+    tx.appendChild(document.createTextNode(v.before));
+    if (v.ltext && v.url) {
+      var a = document.createElement('a');
+      a.setAttribute('href', v.url);
+      a.textContent = v.ltext;
+      a.addEventListener('click', function (e) { e.preventDefault(); });
+      tx.appendChild(a);
+    } else if (v.ltext) {
+      tx.appendChild(document.createTextNode(v.ltext));
+    }
+    tx.appendChild(document.createTextNode(v.after));
+    bar.appendChild(tx);
+    if (v.dismiss) {
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'bst-msgbar-close';
+      x.setAttribute('aria-label', 'Dismiss (preview only)');
+      x.innerHTML = CLOSE_SVG;
+      bar.appendChild(x);
+    }
+    slot.appendChild(bar);
+    var pw = $('mb-pw').value;
+    $('mb-page').style.width = pw ? pw + 'px' : '100%';
+  }
+
+  function steps(v) {
+    var s = [
+      'Copy the JavaScript above into a plain text editor and save it as <b>message-bar.js</b> (in Notepad, set "Save as type" to All files so it does not become .txt).'
+    ];
+    if (v.mode === 'jscss') {
+      s.push('Do the same with the CSS and save it as <b>message-bar.css</b>. Its location must match the CSS_URL line in the script.');
+      s.push('Upload both files to the Site Assets library on the Bridgeton Strong site. If a file already exists, choose Replace.');
+    } else {
+      s.push('Upload it to the Site Assets library on the Bridgeton Strong site. If a file already exists, choose Replace.');
+    }
+    s.push('On the page, add this line inside a script web part: <code>&lt;script src="/sites/BridgetonStrong/SiteAssets/message-bar.js"&gt;&lt;/script&gt;</code>');
+    s.push('Refresh with Ctrl+F5. The bar shows on pages that include that line.');
+    $('mb-steps').innerHTML = s.map(function (t) { return '<li>' + t + '</li>'; }).join('');
+  }
+
+  function render() {
+    var v = vals();
+    $('mb-cssurl-wrap').hidden = v.mode !== 'jscss';
+    $('mb-css-panel').hidden = v.mode !== 'jscss';
+    $('mb-out-js').value = genJs(v);
+    $('mb-out-css').value = v.mode === 'jscss' ? genCss(v) : '';
+    $('mb-status-js').textContent = '';
+    $('mb-status-css').textContent = '';
+    previewBar(v);
+    steps(v);
+  }
+  window.__renderMsgBar = render;
+
+  function setColor(id, val) { $(id).value = val.toLowerCase(); $(id + '-hex').value = val.toUpperCase(); }
+  function applyType(key) {
+    var t = TYPES[key];
+    if (!t) return;
+    setColor('mb-bg', t.bg); setColor('mb-tc', t.text); setColor('mb-lc', t.link); setColor('mb-ic', t.ic);
+    $('mb-icon').value = t.icon;
+  }
+  $('mb-type').addEventListener('change', function () { applyType($('mb-type').value); render(); });
+
+  ['mb-bg', 'mb-tc', 'mb-lc', 'mb-ic'].forEach(function (id) {
+    var p = $(id), t = $(id + '-hex');
+    p.addEventListener('input', function () { t.value = p.value.toUpperCase(); $('mb-type').value = 'custom'; render(); });
+    t.addEventListener('input', function () {
+      var h = hex(t.value, null);
+      if (h) { p.value = h.toLowerCase(); $('mb-type').value = 'custom'; render(); }
+    });
+  });
+  $('mb-icon').addEventListener('change', render);
+  document.querySelectorAll('#mb-controls input[type="text"], #mb-controls input[type="url"], #mb-controls input[type="number"], #mb-controls input[type="checkbox"], #mb-controls select, #mb-pw').forEach(function (el) {
+    el.addEventListener('input', render);
+    el.addEventListener('change', render);
+  });
+
+  function copyFrom(taId, stId) {
+    var ta = $(taId);
+    function fallback() {
+      ta.focus(); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      $(stId).textContent = ok ? 'Copied to clipboard.' : 'Text selected. Press Ctrl+C (or Cmd+C) to copy.';
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ta.value).then(function () { $(stId).textContent = 'Copied to clipboard.'; }, fallback);
+    } else { fallback(); }
+  }
+  $('mb-copy-js').addEventListener('click', function () { copyFrom('mb-out-js', 'mb-status-js'); });
+  $('mb-copy-css').addEventListener('click', function () { copyFrom('mb-out-css', 'mb-status-css'); });
+
+  var st = document.createElement('style');
+  st.id = 'mb-style';
+  document.head.appendChild(st);
+  applyType('info');
   render();
 })();
 </script>
