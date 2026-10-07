@@ -53,7 +53,6 @@ html.bs-halloween .addui-Tabs-tab.addui-Tabs-active{color:#7b2cbf !important; bo
 /* ---------- Quick links / button cards (icons are never touched) ---------- */
 html.bs-halloween .ButtonCard,
 html.bs-halloween #ButtonCard,
-html.bs-halloween [class*="ButtonCard"],
 html.bs-halloween .buttoncard,
 html.bs-halloween [data-automation-id="button-card"],
 html.bs-halloween .root-103,
@@ -63,15 +62,12 @@ html.bs-halloween #button_webpart{
   box-shadow:none !important; transition:transform .15s ease, box-shadow .15s ease;
 }
 html.bs-halloween .ButtonCard:hover,
-html.bs-halloween [class*="ButtonCard"]:hover,
 html.bs-halloween .buttoncard:hover,
 html.bs-halloween [data-automation-id="button-card"]:hover{
   transform:translateY(-2px); box-shadow:0 0 16px rgba(255,122,24,.5) !important;
 }
 html.bs-halloween .ButtonCard *:not(img):not(svg):not(svg *),
-html.bs-halloween [class*="ButtonCard"] *:not(img):not(svg):not(svg *),
 html.bs-halloween [data-automation-id="button-card"] *:not(img):not(svg):not(svg *){color:#f6eefc !important}
-html.bs-halloween [class*="ButtonCard"] img,
 html.bs-halloween [data-automation-id="button-card"] img,
 html.bs-halloween .buttoncard img{filter:none !important; mix-blend-mode:normal !important; opacity:1 !important}
 
@@ -108,7 +104,9 @@ html.bs-halloween [id="f689d78c-6877-4ada-8172-90456fb047c2"]{
 
 /* ---------- Spooky critters layer ---------- */
 #bs-hw-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:2147483000}
-#bs-hw-layer svg{position:absolute;left:0;top:0;will-change:transform;pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#bs-hw-layer svg{position:absolute;left:0;top:0;will-change:transform;pointer-events:none;-webkit-tap-highlight-color:transparent}
+/* only the painted critter is clickable, never the empty box around it (the spider thread box is tall) */
+#bs-hw-layer svg *{pointer-events:auto;cursor:pointer}
 #bs-hw-layer .bs-smoke{position:absolute;border-radius:50%;pointer-events:none;will-change:transform,opacity,filter}
 #bs-hw-layer .bs-wing{transform-origin:32px 14px;animation:bs-flap .22s ease-in-out infinite alternate}
 @keyframes bs-flap{from{transform:scaleY(1)}to{transform:scaleY(.35)}}
