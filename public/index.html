@@ -116,10 +116,13 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .he-area { min-height: 320px; padding: 14px; background: #fff; color: #14213a; border: 1px solid var(--line); border-radius: 5px; line-height: 1.5; overflow: auto; resize: vertical; overflow-wrap: anywhere; }
 .he-area:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .he-area img { max-width: 100%; height: auto; }
-.he-area table { border-collapse: collapse; }
-.he-area td, .he-area th { border: 1px solid #c8c6c4; padding: 4px 8px; }
 .he-area a { color: #005EFF; text-decoration: underline; }
 .he-area ul, .he-area ol { margin: 4px 0 4px 22px; padding: 0; }
+.he-tools { display: flex; flex-direction: column; gap: 10px; padding: 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; }
+.he-tools-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+.he-tools-row > strong { align-self: center; }
+.he-tools .field.narrow { flex: 0 1 96px; }
+.he-area td.he-cur, .he-area th.he-cur { outline: 2px solid #0b63d6; outline-offset: -2px; }
 .he-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 </style>
 
@@ -451,7 +454,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
         <button type="button" data-form="he-linkform">Link</button>
         <button type="button" data-cmd="unlink">Unlink</button>
         <button type="button" data-form="he-imgform">Image</button>
-        <button type="button" id="he-table">Table</button>
+        <button type="button" data-form="he-tblform">Table</button>
         <button type="button" data-cmd="insertHorizontalRule" title="Divider" aria-label="Divider">&mdash;</button>
         <button type="button" data-cmd="undo" title="Undo" aria-label="Undo">Undo</button>
         <button type="button" data-cmd="redo" title="Redo" aria-label="Redo">Redo</button>
@@ -469,7 +472,41 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
         <button type="button" class="primary" id="he-img-ok">Insert image</button>
         <button type="button" data-close>Cancel</button>
       </div>
+      <div class="he-form" id="he-tblform">
+        <div class="field narrow"><label for="he-rows">Rows</label><input type="number" id="he-rows" min="1" max="50" value="3"></div>
+        <div class="field narrow"><label for="he-cols">Columns</label><input type="number" id="he-cols" min="1" max="20" value="3"></div>
+        <label class="check"><input type="checkbox" id="he-hdr" checked> Header row</label>
+        <button type="button" class="primary" id="he-tbl-ok">Insert table</button>
+        <button type="button" data-close>Cancel</button>
+      </div>
+      <div class="he-tools" id="he-tools" role="group" aria-label="Table tools" hidden>
+        <div class="he-tools-row">
+          <strong>Table</strong>
+          <button type="button" data-tbl="rowAbove">Row above</button>
+          <button type="button" data-tbl="rowBelow">Row below</button>
+          <button type="button" data-tbl="colLeft">Column left</button>
+          <button type="button" data-tbl="colRight">Column right</button>
+          <button type="button" data-tbl="delRow">Delete row</button>
+          <button type="button" data-tbl="delCol">Delete column</button>
+          <button type="button" data-tbl="delTable">Delete table</button>
+        </div>
+        <div class="he-tools-row">
+          <div class="field narrow"><span class="lbl">Cell background</span><div class="color"><input type="color" id="he-bg" value="#ffffff" aria-label="Cell background color"></div></div>
+          <label class="check"><input type="checkbox" id="he-nofill" checked> No fill</label>
+          <div class="field narrow"><span class="lbl">Border color</span><div class="color"><input type="color" id="he-bc" value="#c8c6c4" aria-label="Border color"></div></div>
+          <div class="field narrow"><label for="he-bw-all">All sides px</label><input type="number" id="he-bw-all" min="0" max="20" placeholder="-"></div>
+          <div class="field narrow"><label for="he-bw-t">Top px</label><input type="number" id="he-bw-t" min="0" max="20" value="1"></div>
+          <div class="field narrow"><label for="he-bw-r">Right px</label><input type="number" id="he-bw-r" min="0" max="20" value="1"></div>
+          <div class="field narrow"><label for="he-bw-b">Bottom px</label><input type="number" id="he-bw-b" min="0" max="20" value="1"></div>
+          <div class="field narrow"><label for="he-bw-l">Left px</label><input type="number" id="he-bw-l" min="0" max="20" value="1"></div>
+          <div class="field narrow"><label for="he-scope">Apply to</label>
+            <select id="he-scope"><option value="cell">This cell</option><option value="row">This row</option><option value="col">This column</option><option value="table">Whole table</option></select></div>
+          <button type="button" class="primary" id="he-cell-ok">Apply</button>
+        </div>
+        <p class="note">Click inside a table cell to edit it. Where two cells share an edge, the thicker border shows. Table changes can't be undone with Undo.</p>
+      </div>
       <div id="he-area" class="he-area" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Content" spellcheck="true"><p>Start typing here…</p></div>
+      <p class="note" id="he-css-note" hidden>This content includes a &lt;style&gt; block. The preview shows it (scoped to this editor), and Copy HTML includes it. A SharePoint Text web part strips &lt;style&gt;, so paste into an Embed or Script Editor web part, or move the styles inline.</p>
       <textarea class="code" id="he-src-view" spellcheck="false" aria-label="HTML source" hidden style="min-height:320px"></textarea>
       <div class="he-actions">
         <button type="button" class="primary" id="he-copy">Copy HTML</button>
@@ -1290,8 +1327,40 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   function say(m) { status.textContent = m; clearTimeout(timer); timer = setTimeout(function () { status.textContent = ''; }, 3000); }
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
-  function sanitize(html) {
+  // <style> blocks are kept separately (customCss) so the preview can show them, scoped to the editor area
+  var customCss = '';
+  var scopedStyle = document.createElement('style');
+  scopedStyle.id = 'he-scoped-css';
+  document.head.appendChild(scopedStyle);
+
+  function scopeSelector(sel) {
+    return sel.split(',').map(function (x) {
+      x = x.trim();
+      if (/^(html|body|:root)$/i.test(x)) return '#he-area';
+      return '#he-area ' + x.replace(/^(html|body|:root)\s+/i, '');
+    }).join(', ');
+  }
+  function scopeRules(rules) {
+    var out = '';
+    [].forEach.call(rules, function (r) {
+      if (r.type === 1) out += scopeSelector(r.selectorText) + ' {' + r.style.cssText + '}\n';
+      else if (r.type === 4 || r.type === 12) out += '@' + (r.type === 4 ? 'media ' + r.media.mediaText : 'supports ' + r.conditionText) + ' {\n' + scopeRules(r.cssRules) + '}\n';
+      else if (r.type === 7 || r.type === 5) out += r.cssText + '\n';   // keyframes, font-face
+    });
+    return out;
+  }
+  function refreshCss() {
+    var probe = document.createElement('style');
+    probe.media = 'not all';
+    probe.textContent = customCss.replace(/@import[^;]*;/gi, '');
+    document.head.appendChild(probe);
+    try { scopedStyle.textContent = probe.sheet ? scopeRules(probe.sheet.cssRules) : ''; } catch (e) { scopedStyle.textContent = ''; }
+    probe.remove();
+    $('he-css-note').hidden = !customCss.trim();
+  }
+  function sanitize(html, cssOut) {
     var doc = new DOMParser().parseFromString('<body>' + html, 'text/html');
+    [].forEach.call(doc.body.querySelectorAll('style'), function (n) { if (cssOut) cssOut.push(n.textContent); });
     [].forEach.call(doc.body.querySelectorAll('script,style,iframe,object,embed,link,meta,form,base'), function (n) { n.remove(); });
     [].forEach.call(doc.body.querySelectorAll('*'), function (n) {
       [].slice.call(n.attributes).forEach(function (a) {
@@ -1307,11 +1376,21 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   function outputHtml() {
     var c = area.cloneNode(true);
     ['contenteditable', 'spellcheck', 'role', 'aria-multiline', 'aria-label', 'id', 'class', 'style'].forEach(function (a) { c.removeAttribute(a); });
-    return c.innerHTML.trim();
+    [].forEach.call(c.querySelectorAll('.he-cur'), function (n) { n.classList.remove('he-cur'); if (!n.getAttribute('class')) n.removeAttribute('class'); });
+    var css = customCss.trim() ? '<style>\n' + customCss.trim() + '\n</style>\n' : '';
+    return css + c.innerHTML.trim();
+  }
+  // replace the editor content from raw HTML, keeping any <style> blocks
+  function loadHtml(raw) {
+    var css = [], body = sanitize(raw, css);
+    clearCell();
+    customCss = css.join('\n');
+    area.innerHTML = body;
+    refreshCss();
   }
   function keepSel() {
     var s = getSelection();
-    if (s.rangeCount && area.contains(s.anchorNode)) saved = s.getRangeAt(0).cloneRange();
+    if (s.rangeCount && area.contains(s.anchorNode)) { saved = s.getRangeAt(0).cloneRange(); trackCell(s.anchorNode); }
   }
   function restoreSel() {
     area.focus();
@@ -1331,7 +1410,11 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     var cd = e.clipboardData; if (!cd) return;
     e.preventDefault();
     var h = cd.getData('text/html');
-    if (h) document.execCommand('insertHTML', false, sanitize(h));
+    if (h) {
+      var css = [], body = sanitize(h, css);
+      if (css.length) { customCss += (customCss ? '\n' : '') + css.join('\n'); refreshCss(); }
+      document.execCommand('insertHTML', false, body);
+    }
     else document.execCommand('insertText', false, cd.getData('text/plain'));
   });
 
@@ -1375,31 +1458,137 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     closeForms();
   });
 
-  $('he-table').addEventListener('click', function () {
-    var r = parseInt(prompt('Rows?', '3'), 10), c = parseInt(prompt('Columns?', '3'), 10);
-    if (!(r > 0 && c > 0)) return;
-    var t = '<table style="border-collapse:collapse;width:100%"><tbody>';
+  // ---------- tables ----------
+  var curCell = null;
+  function hex(v, d) {
+    if (!v) return d;
+    var m = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/i.exec(v);
+    if (m) return '#' + [m[1], m[2], m[3]].map(function (n) { return ('0' + (+n).toString(16)).slice(-2); }).join('');
+    return /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : d;
+  }
+  function px(v) { var n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  function tableOf(c) { return c && c.closest('table'); }
+
+  function fillFields(c) {
+    var st = c.style;
+    var bg = hex(st.backgroundColor, '');
+    $('he-nofill').checked = !bg; if (bg) $('he-bg').value = bg;
+    $('he-bc').value = hex(st.borderTopColor || st.borderRightColor || st.borderBottomColor || st.borderLeftColor, '#c8c6c4');
+    ['t', 'r', 'b', 'l'].forEach(function (k) {
+      var side = { t: 'Top', r: 'Right', b: 'Bottom', l: 'Left' }[k];
+      var w = st['border' + side + 'Width'], none = st['border' + side + 'Style'] === 'none';
+      $('he-bw-' + k).value = none ? 0 : (w ? px(w) : 1);
+    });
+    $('he-bw-all').value = '';
+  }
+  function trackCell(node) {
+    var el = node && (node.nodeType === 1 ? node : node.parentNode);
+    var c = el && el.closest && el.closest('td,th');
+    if (c && !area.contains(c)) c = null;
+    if (c === curCell) return;
+    if (curCell) curCell.classList.remove('he-cur');
+    curCell = c;
+    if (c) { c.classList.add('he-cur'); fillFields(c); }
+    $('he-tools').hidden = !c;
+  }
+  function clearCell() { if (curCell) curCell.classList.remove('he-cur'); curCell = null; $('he-tools').hidden = true; }
+
+  $('he-tbl-ok').addEventListener('click', function () {
+    var r = Math.max(1, Math.min(50, parseInt($('he-rows').value, 10) || 0)), c = Math.max(1, Math.min(20, parseInt($('he-cols').value, 10) || 0));
+    var hdr = $('he-hdr').checked;
+    var t = '<table id="he-new-tbl"><tbody>';
     for (var i = 0; i < r; i++) {
       t += '<tr>';
-      for (var j = 0; j < c; j++) t += '<td style="border:1px solid #c8c6c4;padding:4px 8px">&nbsp;</td>';
+      for (var j = 0; j < c; j++) t += (hdr && i === 0) ? '<th>Heading</th>' : '<td>&nbsp;</td>';
       t += '</tr>';
     }
-    exec('insertHTML', t + '</tbody></table><p></p>');
+    exec('insertHTML', t + '</tbody></table><p><br></p>');
+    // styles are applied afterwards because insertHTML drops borders and padding
+    var tbl = area.querySelector('#he-new-tbl');
+    if (tbl) {
+      tbl.removeAttribute('id');
+      tbl.setAttribute('style', 'border-collapse:collapse;width:100%');
+      [].forEach.call(tbl.querySelectorAll('td,th'), function (cell) {
+        cell.setAttribute('style', 'border:1px solid #c8c6c4;padding:4px 8px' + (cell.tagName === 'TH' ? ';background-color:#f3f2f1;text-align:left' : ''));
+      });
+    }
+    closeForms();
   });
+
+  function cloneCell(ref, forceTd) {
+    var n = document.createElement(forceTd ? 'td' : ref.tagName.toLowerCase());
+    var st = ref.getAttribute('style'); if (st) n.setAttribute('style', st);
+    if (ref.colSpan > 1) n.colSpan = ref.colSpan;
+    n.innerHTML = '&nbsp;';
+    return n;
+  }
+  function targets(scope) {
+    var tr = curCell.parentNode, t = tableOf(curCell), idx = curCell.cellIndex;
+    if (scope === 'cell') return [curCell];
+    if (scope === 'row') return [].slice.call(tr.cells);
+    var rows = [].slice.call(t.rows);
+    if (scope === 'col') return rows.map(function (r) { return r.cells[idx]; }).filter(Boolean);
+    return rows.reduce(function (a, r) { return a.concat([].slice.call(r.cells)); }, []);
+  }
+
+  $('he-tools').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-tbl]'); if (!b || !curCell) return;
+    var act = b.dataset.tbl, tr = curCell.parentNode, t = tableOf(curCell), idx = curCell.cellIndex, n;
+    if (act === 'rowAbove' || act === 'rowBelow') {
+      n = document.createElement('tr');
+      [].forEach.call(tr.cells, function (c) { n.appendChild(cloneCell(c, true)); });
+      tr.parentNode.insertBefore(n, act === 'rowBelow' ? tr.nextSibling : tr);
+    } else if (act === 'colLeft' || act === 'colRight') {
+      [].forEach.call(t.rows, function (r) {
+        var c = r.cells[Math.min(idx, r.cells.length - 1)]; if (!c) return;
+        r.insertBefore(cloneCell(c, false), act === 'colRight' ? c.nextSibling : c);
+      });
+    } else if (act === 'delRow') {
+      tr.remove(); if (!t.rows.length) t.remove();
+      clearCell();
+    } else if (act === 'delCol') {
+      [].forEach.call(t.rows, function (r) { if (r.cells[idx]) r.cells[idx].remove(); });
+      if (![].some.call(t.rows, function (r) { return r.cells.length; })) t.remove();
+      clearCell();
+    } else if (act === 'delTable') {
+      t.remove(); clearCell();
+    }
+    area.focus();
+  });
+
+  $('he-bw-all').addEventListener('input', function () {
+    var v = this.value; if (v === '') return;
+    ['t', 'r', 'b', 'l'].forEach(function (k) { $('he-bw-' + k).value = v; });
+  });
+  $('he-cell-ok').addEventListener('click', function () {
+    if (!curCell) return;
+    var color = $('he-bc').value, bg = $('he-nofill').checked ? '' : $('he-bg').value;
+    var sides = { t: 'top', r: 'right', b: 'bottom', l: 'left' };
+    targets($('he-scope').value).forEach(function (c) {
+      c.style.backgroundColor = bg;
+      Object.keys(sides).forEach(function (k) {
+        var w = Math.max(0, Math.min(20, parseFloat($('he-bw-' + k).value) || 0));
+        c.style.setProperty('border-' + sides[k], w ? w + 'px solid ' + color : 'none');
+      });
+      if (!c.getAttribute('style')) c.removeAttribute('style');
+    });
+    say('Cell style applied.');
+  });
+  $('he-bg').addEventListener('input', function () { $('he-nofill').checked = false; });
 
   function showingSource() { return !src.hidden; }
   $('he-toggle').addEventListener('click', function () {
     if (showingSource()) {
-      area.innerHTML = sanitize(src.value); src.hidden = true; area.hidden = false; this.textContent = 'View / edit HTML';
+      loadHtml(src.value); src.hidden = true; area.hidden = false; this.textContent = 'View / edit HTML';
     } else {
       src.value = outputHtml(); src.hidden = false; area.hidden = true; this.textContent = 'Back to visual editor';
     }
   });
   $('he-clear').addEventListener('click', function () {
-    if (confirm('Clear everything in the editor?')) { area.innerHTML = '<p><br></p>'; src.value = ''; }
+    if (confirm('Clear everything in the editor?')) { loadHtml('<p><br></p>'); src.value = ''; }
   });
   $('he-copy').addEventListener('click', function () {
-    if (showingSource()) area.innerHTML = sanitize(src.value);
+    if (showingSource()) loadHtml(src.value);
     var out = outputHtml();
     function ok() { say('Copied to clipboard.'); }
     function fallback() {
