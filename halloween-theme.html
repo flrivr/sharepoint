@@ -18,7 +18,7 @@ html.bs-halloween{
   /* SharePoint's own theme variables: recolors anything that uses the site theme (blue -> orange) */
   --themePrimary:#ff7a18; --themeDarkAlt:#e8680c; --themeDark:#c2410c; --themeDarker:#9a3412;
   --themeSecondary:#ff8f3a; --themeTertiary:#ffb347; --themeLight:#3a2457; --themeLighter:#2a0a4a; --themeLighterAlt:#120a1c;
-  --bodyBackground:#000; --bodyText:#f6eefc; --bodySubtext:#cdb8e6;
+  --bodyBackground:#000;
 }
 
 /* ---------- Page background: black in the side margins only ----------
@@ -27,14 +27,13 @@ html.bs-halloween,
 html.bs-halloween body,
 html.bs-halloween #spPageChromeAppDiv,
 html.bs-halloween [data-automation-id="contentScrollRegion"]{
-  background-color:#000 !important; color:var(--hw-ink);
+  background-color:#000 !important;
 }
 
 /* ---------- Text ---------- */
 html.bs-halloween h1,html.bs-halloween h2,html.bs-halloween h3,html.bs-halloween h4,
 html.bs-halloween [data-automation-id="webPartHeader"],
 html.bs-halloween [class*="webPartHeader"]{color:var(--hw-orange-soft) !important}
-html.bs-halloween p,html.bs-halloween li,html.bs-halloween span,html.bs-halloween label{color:inherit}
 html.bs-halloween a{color:var(--hw-orange-soft)}
 html.bs-halloween a:hover{color:#fff}
 
@@ -122,6 +121,20 @@ html.bs-halloween .gradient-text0{
 html.bs-halloween [id="f689d78c-6877-4ada-8172-90456fb047c2"]{
   border-color:var(--hw-orange) !important; box-shadow:0 0 22px rgba(255,122,24,.55) !important;
 }
+
+
+/* ---------- Custom tab bar + message bar text: readable on dark ---------- */
+html.bs-halloween [class*="Tabs-tab"],
+html.bs-halloween [class*="Tabs-tab"] *,
+html.bs-halloween .addui-Tabs *,
+html.bs-halloween #gradA,html.bs-halloween #gradA *,
+html.bs-halloween #grad9,html.bs-halloween #grad9 *,
+html.bs-halloween .taierframe .grador,html.bs-halloween .taierframe .grador *,
+html.bs-halloween .innergrad,html.bs-halloween .innergrad *{color:var(--hw-ink) !important}
+html.bs-halloween [class*="Tabs-active"],
+html.bs-halloween [class*="Tabs-active"] *{color:var(--hw-orange-soft) !important}
+html.bs-halloween #gradA a,html.bs-halloween #grad9 a,html.bs-halloween .innergrad a,
+html.bs-halloween #gradA a *,html.bs-halloween #grad9 a *,html.bs-halloween .innergrad a *{color:var(--hw-orange) !important}
 
 /* ---------- Spooky critters layer ---------- */
 #bs-hw-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:2147483000}

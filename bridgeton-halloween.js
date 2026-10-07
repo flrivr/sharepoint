@@ -34,12 +34,35 @@
     s.innerHTML=html; layer.appendChild(s); return s;
   }
 
+
+  /* ===== "Ghosts busted" counter in the title bar (remembered per visitor) ===== */
+  var KEY='bsHalloweenBusted', busted=0;
+  try{busted=parseInt(localStorage.getItem(KEY),10)||0}catch(e){}
+  var st=document.createElement('style');
+  st.textContent='#bs-hw-count{position:fixed;top:9px;left:230px;z-index:2147483001;pointer-events:none;'+
+    'font:600 13px "Segoe UI",system-ui,sans-serif;color:#fff;padding:4px 12px 4px 10px;border-radius:999px;'+
+    'background:rgba(0,0,0,.55);border:1px solid #ff7a18;box-shadow:0 0 10px rgba(255,122,24,.45);white-space:nowrap}'+
+    '#bs-hw-count b{color:#ffb347;font-variant-numeric:tabular-nums}'+
+    '@media (max-width:1100px){#bs-hw-count{display:none}}';
+  document.head.appendChild(st);
+  var pill=document.createElement('div'); pill.id='bs-hw-count';
+  document.body.appendChild(pill);
+  function showCount(bump){
+    pill.innerHTML='\uD83D\uDC7B Ghosts busted: <b>'+busted+'</b>';
+    if(bump&&!reduce) pill.animate([{transform:'scale(1)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],{duration:300,easing:'ease-out'});
+  }
+  showCount(false);
+  function bust(){
+    busted++; try{localStorage.setItem(KEY,String(busted))}catch(e){}
+    showCount(true);
+  }
+
   /* Click/tap a critter: it vanishes in a puff of eerie smoke */
   var SMOKE=['rgba(190,150,255,.55)','rgba(140,90,210,.5)','rgba(235,225,250,.4)','rgba(255,150,60,.35)'];
   function gone(n){return function(){n.remove()}}
   function poof(el,anim){
     var r=el.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2, size=Math.max(r.width,r.height);
-    anim.pause(); el.style.pointerEvents='none';
+    anim.pause(); el.style.pointerEvents='none'; bust();
     el.animate([{opacity:1,filter:'blur(0px)',scale:1},{opacity:0,filter:'blur(8px)',scale:1.35}],
       {duration:380,easing:'ease-out',fill:'forwards'}).onfinish=gone(el);
     if(reduce) return;
