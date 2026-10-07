@@ -21,21 +21,14 @@ html.bs-halloween{
   --bodyBackground:#000; --bodyText:#f6eefc; --bodySubtext:#cdb8e6;
 }
 
-/* ---------- Page background: black ---------- */
+/* ---------- Page background: black in the side margins only ----------
+   Only the page chrome behind the content is blackened. The content zones/sections keep their original background. */
 html.bs-halloween,
 html.bs-halloween body,
 html.bs-halloween #spPageChromeAppDiv,
-html.bs-halloween #spPageCanvasContent,
-html.bs-halloween [data-automation-id="contentScrollRegion"],
-html.bs-halloween [data-automation-id="pageContent"],
-html.bs-halloween .CanvasComponent,
-html.bs-halloween [class*="CanvasZone"],
-html.bs-halloween [class*="CanvasSection"],
-html.bs-halloween [class*="sectionContainer"]{
-  background:#000 !important; background-image:none !important; color:var(--hw-ink);
+html.bs-halloween [data-automation-id="contentScrollRegion"]{
+  background-color:#000 !important; color:var(--hw-ink);
 }
-html.bs-halloween [class*="sectionContainer"]::before,
-html.bs-halloween [class*="sectionContainer"]::after{background:none !important}
 
 /* ---------- Text ---------- */
 html.bs-halloween h1,html.bs-halloween h2,html.bs-halloween h3,html.bs-halloween h4,
@@ -52,7 +45,7 @@ html.bs-halloween #O365_NavHeader,
 html.bs-halloween #SuiteNavWrapper,
 html.bs-halloween [data-automation-id="SiteHeader"]{
   background:linear-gradient(90deg,#000 0%,var(--hw-purple-deep) 55%,var(--hw-orange-deep) 100%) !important;
-  border-bottom:2px solid var(--hw-orange) !important;
+  border-bottom:1px solid var(--hw-orange) !important;
 }
 html.bs-halloween .SiteHeaderTitleMinimal,
 html.bs-halloween [class*="SiteHeaderTitle"]{
@@ -85,7 +78,7 @@ html.bs-halloween [data-automation-id="button-card"],
 html.bs-halloween .root-103,
 html.bs-halloween #button_webpart{
   background:linear-gradient(var(--hw-panel),var(--hw-panel)) padding-box,var(--hw-grad) border-box !important;
-  border:2px solid transparent !important; border-radius:10px; color:var(--hw-ink) !important;
+  border:1px solid transparent !important; border-radius:10px; color:var(--hw-ink) !important;
   box-shadow:none !important; transition:transform .15s ease, box-shadow .15s ease;
 }
 html.bs-halloween .ButtonCard:hover,
@@ -119,7 +112,7 @@ html.bs-halloween .innergrad,
 html.bs-halloween [class^="bst-ai"],
 html.bs-halloween [class*=" bst-ai"]{
   background:linear-gradient(var(--hw-panel),var(--hw-panel)) padding-box,var(--hw-grad) border-box !important;
-  border-color:transparent !important; box-shadow:0 0 18px rgba(123,44,191,.35) !important;
+  border-color:transparent !important; border-width:1px !important; box-shadow:0 0 14px rgba(123,44,191,.3) !important;
 }
 html.bs-halloween .gradient-text0{
   background:var(--hw-grad) !important; -webkit-background-clip:text !important; background-clip:text !important;
