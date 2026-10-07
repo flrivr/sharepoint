@@ -105,6 +105,22 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .mb-suite { height: 34px; background: #0b2a5b; color: #cfe0ff; font-size: 12px; display: flex; align-items: center; padding: 0 12px; }
 .mb-head { height: 64px; background: linear-gradient(90deg, #00194A, #0b4fb3 60%, #0271EB); color: #fff; display: flex; align-items: center; padding: 0 18px; font-size: 22px; font-weight: 300; white-space: nowrap; }
 .mb-body { height: 36px; background: #faf9f8; }
+
+/* HTML editor tab */
+.he-wrap { display: flex; flex-direction: column; gap: 12px; }
+.he-form { display: none; gap: 8px; flex-wrap: wrap; align-items: flex-end; padding: 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; }
+.he-form.open { display: flex; }
+.he-form .field { flex: 1 1 160px; }
+.he-form .field.grow { flex: 2 1 260px; }
+.he-form .field.narrow { flex: 0 1 100px; }
+.he-area { min-height: 320px; padding: 14px; background: #fff; color: #14213a; border: 1px solid var(--line); border-radius: 5px; line-height: 1.5; overflow: auto; resize: vertical; overflow-wrap: anywhere; }
+.he-area:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.he-area img { max-width: 100%; height: auto; }
+.he-area table { border-collapse: collapse; }
+.he-area td, .he-area th { border: 1px solid #c8c6c4; padding: 4px 8px; }
+.he-area a { color: #005EFF; text-decoration: underline; }
+.he-area ul, .he-area ol { margin: 4px 0 4px 22px; padding: 0; }
+.he-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 </style>
 
 </head>
@@ -119,6 +135,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     <button type="button" class="tab" role="tab" id="tab-alert" aria-selected="true" aria-controls="panel-alert">Alert panel</button>
     <button type="button" class="tab" role="tab" id="tab-header" aria-selected="false" aria-controls="panel-header" tabindex="-1">Header message</button>
     <button type="button" class="tab" role="tab" id="tab-msgbar" aria-selected="false" aria-controls="panel-msgbar" tabindex="-1">Message bar</button>
+    <button type="button" class="tab" role="tab" id="tab-htmled" aria-selected="false" aria-controls="panel-htmled" tabindex="-1">HTML editor</button>
   </div>
 
   <div id="panel-alert" role="tabpanel" aria-labelledby="tab-alert">
@@ -406,6 +423,61 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
         </section>
       </div>
     </div>
+  </div>
+  <div id="panel-htmled" role="tabpanel" aria-labelledby="tab-htmled" hidden>
+    <section class="panel he-wrap" aria-label="HTML editor">
+      <p class="note">Write and format content here, add images by URL, then copy the HTML to paste into a SharePoint web part (Text web part Source view, or an Embed/Script Editor web part).</p>
+      <div class="toolbar" role="toolbar" aria-label="Text formatting" id="he-bar">
+        <button type="button" data-cmd="bold" title="Bold" aria-label="Bold"><b>B</b></button>
+        <button type="button" data-cmd="italic" title="Italic" aria-label="Italic"><i>I</i></button>
+        <button type="button" data-cmd="underline" title="Underline" aria-label="Underline"><u>U</u></button>
+        <button type="button" data-cmd="strikeThrough" title="Strikethrough" aria-label="Strikethrough"><s>S</s></button>
+        <select id="he-block" aria-label="Paragraph style" style="width:auto">
+          <option value="p">Paragraph</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option>
+          <option value="h3">Heading 3</option><option value="h4">Heading 4</option><option value="blockquote">Quote</option>
+        </select>
+        <select id="he-size" aria-label="Font size" style="width:auto">
+          <option value="">Size</option><option value="2">Small</option><option value="3">Normal</option><option value="5">Large</option><option value="6">X-large</option>
+        </select>
+        <input type="color" id="he-fore" value="#14213a" aria-label="Text color" title="Text color">
+        <input type="color" id="he-hilite" value="#ffff00" aria-label="Highlight color" title="Highlight">
+        <button type="button" data-cmd="justifyLeft" title="Align left" aria-label="Align left">Left</button>
+        <button type="button" data-cmd="justifyCenter" title="Center" aria-label="Center">Center</button>
+        <button type="button" data-cmd="justifyRight" title="Align right" aria-label="Align right">Right</button>
+        <button type="button" data-cmd="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list">&bull; List</button>
+        <button type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list">1. List</button>
+        <button type="button" data-cmd="outdent" title="Outdent" aria-label="Outdent">&larr;</button>
+        <button type="button" data-cmd="indent" title="Indent" aria-label="Indent">&rarr;</button>
+        <button type="button" data-form="he-linkform">Link</button>
+        <button type="button" data-cmd="unlink">Unlink</button>
+        <button type="button" data-form="he-imgform">Image</button>
+        <button type="button" id="he-table">Table</button>
+        <button type="button" data-cmd="insertHorizontalRule" title="Divider" aria-label="Divider">&mdash;</button>
+        <button type="button" data-cmd="undo" title="Undo" aria-label="Undo">Undo</button>
+        <button type="button" data-cmd="redo" title="Redo" aria-label="Redo">Redo</button>
+        <button type="button" data-cmd="removeFormat" title="Clear formatting on the selection" aria-label="Clear formatting">Clear</button>
+      </div>
+      <div class="he-form" id="he-linkform">
+        <div class="field grow"><label for="he-url">Link address</label><input type="url" id="he-url" placeholder="https://…"></div>
+        <button type="button" class="primary" id="he-link-ok">Apply link</button>
+        <button type="button" data-close>Cancel</button>
+      </div>
+      <div class="he-form" id="he-imgform">
+        <div class="field grow"><label for="he-src">Image URL</label><input type="url" id="he-src" placeholder="https://…/picture.jpg"></div>
+        <div class="field"><label for="he-alt">Alt text</label><input type="text" id="he-alt" placeholder="Describe the image"></div>
+        <div class="field narrow"><label for="he-w">Width</label><input type="text" id="he-w" placeholder="300 or 50%"></div>
+        <button type="button" class="primary" id="he-img-ok">Insert image</button>
+        <button type="button" data-close>Cancel</button>
+      </div>
+      <div id="he-area" class="he-area" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Content" spellcheck="true"><p>Start typing here…</p></div>
+      <textarea class="code" id="he-src-view" spellcheck="false" aria-label="HTML source" hidden style="min-height:320px"></textarea>
+      <div class="he-actions">
+        <button type="button" class="primary" id="he-copy">Copy HTML</button>
+        <button type="button" id="he-toggle">View / edit HTML</button>
+        <button type="button" id="he-clear">Clear all</button>
+        <span class="status" id="he-status" role="status" aria-live="polite"></span>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -882,7 +954,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   });
 
   // tabs
-  var tabs = [['tab-alert', 'panel-alert'], ['tab-header', 'panel-header'], ['tab-msgbar', 'panel-msgbar']];
+  var tabs = [['tab-alert', 'panel-alert'], ['tab-header', 'panel-header'], ['tab-msgbar', 'panel-msgbar'], ['tab-htmled', 'panel-htmled']];
   function show(i) {
     tabs.forEach(function (p, j) {
       $(p[0]).setAttribute('aria-selected', j === i ? 'true' : 'false');
@@ -1207,6 +1279,139 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   document.head.appendChild(st);
   applyType('info');
   render();
+})();
+</script>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var area = $('he-area'), src = $('he-src-view'), status = $('he-status'), saved = null, timer;
+
+  function say(m) { status.textContent = m; clearTimeout(timer); timer = setTimeout(function () { status.textContent = ''; }, 3000); }
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function sanitize(html) {
+    var doc = new DOMParser().parseFromString('<body>' + html, 'text/html');
+    [].forEach.call(doc.body.querySelectorAll('script,style,iframe,object,embed,link,meta,form,base'), function (n) { n.remove(); });
+    [].forEach.call(doc.body.querySelectorAll('*'), function (n) {
+      [].slice.call(n.attributes).forEach(function (a) {
+        var name = a.name.toLowerCase();
+        if (/^on/.test(name) ||
+            (name === 'class' && /^Mso/.test(a.value)) ||
+            (/^(href|src|xlink:href)$/.test(name) && /^\s*(javascript|vbscript):/i.test(a.value)) ||
+            (name === 'src' && /^\s*data:(?!image\/)/i.test(a.value))) n.removeAttribute(a.name);
+      });
+    });
+    return doc.body.innerHTML;
+  }
+  function outputHtml() {
+    var c = area.cloneNode(true);
+    ['contenteditable', 'spellcheck', 'role', 'aria-multiline', 'aria-label', 'id', 'class', 'style'].forEach(function (a) { c.removeAttribute(a); });
+    return c.innerHTML.trim();
+  }
+  function keepSel() {
+    var s = getSelection();
+    if (s.rangeCount && area.contains(s.anchorNode)) saved = s.getRangeAt(0).cloneRange();
+  }
+  function restoreSel() {
+    area.focus();
+    if (saved) { var s = getSelection(); s.removeAllRanges(); s.addRange(saved); }
+  }
+  function exec(cmd, val) {
+    restoreSel();
+    try { document.execCommand('styleWithCSS', false, true); } catch (e) {}
+    document.execCommand(cmd, false, val || null);
+    keepSel();
+  }
+  function closeForms() { [].forEach.call(document.querySelectorAll('.he-form'), function (f) { f.classList.remove('open'); }); }
+
+  ['keyup', 'mouseup', 'input'].forEach(function (n) { area.addEventListener(n, keepSel); });
+
+  area.addEventListener('paste', function (e) {
+    var cd = e.clipboardData; if (!cd) return;
+    e.preventDefault();
+    var h = cd.getData('text/html');
+    if (h) document.execCommand('insertHTML', false, sanitize(h));
+    else document.execCommand('insertText', false, cd.getData('text/plain'));
+  });
+
+  // keep the text selection while clicking toolbar buttons
+  $('he-bar').addEventListener('mousedown', function (e) {
+    if (!/^(SELECT|INPUT|OPTION)$/.test(e.target.tagName)) e.preventDefault();
+  });
+  $('he-bar').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.cmd) { exec(b.dataset.cmd); return; }
+    if (b.dataset.form) {
+      keepSel();
+      var f = $(b.dataset.form), wasOpen = f.classList.contains('open');
+      closeForms();
+      if (!wasOpen) { f.classList.add('open'); f.querySelector('input').focus(); }
+    }
+  });
+  [].forEach.call(document.querySelectorAll('.he-form [data-close]'), function (b) { b.addEventListener('click', closeForms); });
+
+  $('he-block').addEventListener('change', function () { exec('formatBlock', this.value); });
+  $('he-size').addEventListener('change', function () { if (this.value) exec('fontSize', this.value); this.value = ''; });
+  $('he-fore').addEventListener('input', function () { exec('foreColor', this.value); });
+  $('he-hilite').addEventListener('input', function () { exec('hiliteColor', this.value); });
+
+  $('he-link-ok').addEventListener('click', function () {
+    var u = $('he-url').value.trim();
+    if (!/^(https?:\/\/|\/|mailto:)/i.test(u)) { say('Enter a full address starting with https://'); return; }
+    exec('createLink', u);
+    [].forEach.call(area.querySelectorAll('a[href]'), function (a) { if (a.getAttribute('href') === u && /^https?:/i.test(u)) a.target = '_blank'; });
+    $('he-url').value = ''; closeForms();
+  });
+
+  $('he-img-ok').addEventListener('click', function () {
+    var s = $('he-src').value.trim(), alt = $('he-alt').value.trim(), w = $('he-w').value.trim();
+    if (!/^(https?:\/\/|\/)/i.test(s)) { say('Enter a full image address starting with https://'); return; }
+    var width = w ? (/^\d+$/.test(w) ? w + 'px' : w.replace(/[^0-9a-z%.]/gi, '')) : '';
+    exec('insertHTML', '<img id="he-new-img" src="' + esc(s) + '" alt="' + esc(alt) + '">');
+    var im = area.querySelector('#he-new-img');   // style set afterwards; insertHTML drops some properties
+    if (im) { im.removeAttribute('id'); im.setAttribute('style', 'max-width:100%;height:auto;' + (width ? 'width:' + width + ';' : '')); }
+    ['he-src', 'he-alt', 'he-w'].forEach(function (id) { $(id).value = ''; });
+    closeForms();
+  });
+
+  $('he-table').addEventListener('click', function () {
+    var r = parseInt(prompt('Rows?', '3'), 10), c = parseInt(prompt('Columns?', '3'), 10);
+    if (!(r > 0 && c > 0)) return;
+    var t = '<table style="border-collapse:collapse;width:100%"><tbody>';
+    for (var i = 0; i < r; i++) {
+      t += '<tr>';
+      for (var j = 0; j < c; j++) t += '<td style="border:1px solid #c8c6c4;padding:4px 8px">&nbsp;</td>';
+      t += '</tr>';
+    }
+    exec('insertHTML', t + '</tbody></table><p></p>');
+  });
+
+  function showingSource() { return !src.hidden; }
+  $('he-toggle').addEventListener('click', function () {
+    if (showingSource()) {
+      area.innerHTML = sanitize(src.value); src.hidden = true; area.hidden = false; this.textContent = 'View / edit HTML';
+    } else {
+      src.value = outputHtml(); src.hidden = false; area.hidden = true; this.textContent = 'Back to visual editor';
+    }
+  });
+  $('he-clear').addEventListener('click', function () {
+    if (confirm('Clear everything in the editor?')) { area.innerHTML = '<p><br></p>'; src.value = ''; }
+  });
+  $('he-copy').addEventListener('click', function () {
+    if (showingSource()) area.innerHTML = sanitize(src.value);
+    var out = outputHtml();
+    function ok() { say('Copied to clipboard.'); }
+    function fallback() {
+      var ta = document.createElement('textarea'); ta.value = out; document.body.appendChild(ta); ta.select();
+      var done = false;
+      try { done = document.execCommand('copy'); } catch (e) {}
+      ta.remove();
+      if (done) ok(); else say('Copy failed. Use View / edit HTML and copy from there.');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(out).then(ok, fallback);
+    else fallback();
+  });
 })();
 </script>
 
