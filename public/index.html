@@ -116,8 +116,6 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .he-area { min-height: 320px; padding: 14px; background: #fff; color: #14213a; border: 1px solid var(--line); border-radius: 5px; line-height: 1.5; overflow: auto; resize: vertical; overflow-wrap: anywhere; }
 .he-area:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .he-area img { max-width: 100%; height: auto; }
-.he-area table { border-collapse: collapse; }
-.he-area td, .he-area th { border: 1px solid #c8c6c4; padding: 4px 8px; }
 .he-area a { color: #005EFF; text-decoration: underline; }
 .he-area ul, .he-area ol { margin: 4px 0 4px 22px; padding: 0; }
 .he-tools { display: flex; flex-direction: column; gap: 10px; padding: 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; }
@@ -508,6 +506,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
         <p class="note">Click inside a table cell to edit it. Where two cells share an edge, the thicker border shows. Table changes can't be undone with Undo.</p>
       </div>
       <div id="he-area" class="he-area" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Content" spellcheck="true"><p>Start typing here…</p></div>
+      <p class="note" id="he-css-note" hidden>This content includes a &lt;style&gt; block. The preview shows it (scoped to this editor), and Copy HTML includes it. A SharePoint Text web part strips &lt;style&gt;, so paste into an Embed or Script Editor web part, or move the styles inline.</p>
       <textarea class="code" id="he-src-view" spellcheck="false" aria-label="HTML source" hidden style="min-height:320px"></textarea>
       <div class="he-actions">
         <button type="button" class="primary" id="he-copy">Copy HTML</button>
@@ -1328,8 +1327,40 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   function say(m) { status.textContent = m; clearTimeout(timer); timer = setTimeout(function () { status.textContent = ''; }, 3000); }
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
-  function sanitize(html) {
+  // <style> blocks are kept separately (customCss) so the preview can show them, scoped to the editor area
+  var customCss = '';
+  var scopedStyle = document.createElement('style');
+  scopedStyle.id = 'he-scoped-css';
+  document.head.appendChild(scopedStyle);
+
+  function scopeSelector(sel) {
+    return sel.split(',').map(function (x) {
+      x = x.trim();
+      if (/^(html|body|:root)$/i.test(x)) return '#he-area';
+      return '#he-area ' + x.replace(/^(html|body|:root)\s+/i, '');
+    }).join(', ');
+  }
+  function scopeRules(rules) {
+    var out = '';
+    [].forEach.call(rules, function (r) {
+      if (r.type === 1) out += scopeSelector(r.selectorText) + ' {' + r.style.cssText + '}\n';
+      else if (r.type === 4 || r.type === 12) out += '@' + (r.type === 4 ? 'media ' + r.media.mediaText : 'supports ' + r.conditionText) + ' {\n' + scopeRules(r.cssRules) + '}\n';
+      else if (r.type === 7 || r.type === 5) out += r.cssText + '\n';   // keyframes, font-face
+    });
+    return out;
+  }
+  function refreshCss() {
+    var probe = document.createElement('style');
+    probe.media = 'not all';
+    probe.textContent = customCss.replace(/@import[^;]*;/gi, '');
+    document.head.appendChild(probe);
+    try { scopedStyle.textContent = probe.sheet ? scopeRules(probe.sheet.cssRules) : ''; } catch (e) { scopedStyle.textContent = ''; }
+    probe.remove();
+    $('he-css-note').hidden = !customCss.trim();
+  }
+  function sanitize(html, cssOut) {
     var doc = new DOMParser().parseFromString('<body>' + html, 'text/html');
+    [].forEach.call(doc.body.querySelectorAll('style'), function (n) { if (cssOut) cssOut.push(n.textContent); });
     [].forEach.call(doc.body.querySelectorAll('script,style,iframe,object,embed,link,meta,form,base'), function (n) { n.remove(); });
     [].forEach.call(doc.body.querySelectorAll('*'), function (n) {
       [].slice.call(n.attributes).forEach(function (a) {
@@ -1346,7 +1377,16 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     var c = area.cloneNode(true);
     ['contenteditable', 'spellcheck', 'role', 'aria-multiline', 'aria-label', 'id', 'class', 'style'].forEach(function (a) { c.removeAttribute(a); });
     [].forEach.call(c.querySelectorAll('.he-cur'), function (n) { n.classList.remove('he-cur'); if (!n.getAttribute('class')) n.removeAttribute('class'); });
-    return c.innerHTML.trim();
+    var css = customCss.trim() ? '<style>\n' + customCss.trim() + '\n</style>\n' : '';
+    return css + c.innerHTML.trim();
+  }
+  // replace the editor content from raw HTML, keeping any <style> blocks
+  function loadHtml(raw) {
+    var css = [], body = sanitize(raw, css);
+    clearCell();
+    customCss = css.join('\n');
+    area.innerHTML = body;
+    refreshCss();
   }
   function keepSel() {
     var s = getSelection();
@@ -1370,7 +1410,11 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     var cd = e.clipboardData; if (!cd) return;
     e.preventDefault();
     var h = cd.getData('text/html');
-    if (h) document.execCommand('insertHTML', false, sanitize(h));
+    if (h) {
+      var css = [], body = sanitize(h, css);
+      if (css.length) { customCss += (customCss ? '\n' : '') + css.join('\n'); refreshCss(); }
+      document.execCommand('insertHTML', false, body);
+    }
     else document.execCommand('insertText', false, cd.getData('text/plain'));
   });
 
@@ -1535,16 +1579,16 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   function showingSource() { return !src.hidden; }
   $('he-toggle').addEventListener('click', function () {
     if (showingSource()) {
-      clearCell(); area.innerHTML = sanitize(src.value); src.hidden = true; area.hidden = false; this.textContent = 'View / edit HTML';
+      loadHtml(src.value); src.hidden = true; area.hidden = false; this.textContent = 'View / edit HTML';
     } else {
       src.value = outputHtml(); src.hidden = false; area.hidden = true; this.textContent = 'Back to visual editor';
     }
   });
   $('he-clear').addEventListener('click', function () {
-    if (confirm('Clear everything in the editor?')) { clearCell(); area.innerHTML = '<p><br></p>'; src.value = ''; }
+    if (confirm('Clear everything in the editor?')) { loadHtml('<p><br></p>'); src.value = ''; }
   });
   $('he-copy').addEventListener('click', function () {
-    if (showingSource()) { clearCell(); area.innerHTML = sanitize(src.value); }
+    if (showingSource()) loadHtml(src.value);
     var out = outputHtml();
     function ok() { say('Copied to clipboard.'); }
     function fallback() {
