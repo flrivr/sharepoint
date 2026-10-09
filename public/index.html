@@ -123,6 +123,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .he-tools-row > strong { align-self: center; }
 .he-tools .field.narrow { flex: 0 1 96px; }
 .he-area td.he-cur, .he-area th.he-cur { outline: 2px solid #0b63d6; outline-offset: -2px; }
+.he-area td.he-sel, .he-area th.he-sel { background-image: linear-gradient(rgba(11,99,214,.2), rgba(11,99,214,.2)); outline: 2px dashed #0b63d6; outline-offset: -2px; }
 .he-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 </style>
 
@@ -493,6 +494,16 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
           <button type="button" data-tbl="delTable">Delete table</button>
         </div>
         <div class="he-tools-row">
+          <strong>Cells</strong>
+          <button type="button" data-tbl="mergeRight">Merge right</button>
+          <button type="button" data-tbl="mergeDown">Merge down</button>
+          <button type="button" data-tbl="mergeSel">Merge selected</button>
+          <button type="button" data-tbl="unmerge">Unmerge</button>
+          <div class="field narrow"><label for="he-sp-c">Split into columns</label><input type="number" id="he-sp-c" min="1" max="10" value="2"></div>
+          <div class="field narrow"><label for="he-sp-r">Split into rows</label><input type="number" id="he-sp-r" min="1" max="10" value="1"></div>
+          <button type="button" data-tbl="split">Split cell</button>
+        </div>
+        <div class="he-tools-row">
           <div class="field narrow"><span class="lbl">Cell background</span><div class="color"><input type="color" id="he-bg" value="#ffffff" aria-label="Cell background color"></div></div>
           <label class="check"><input type="checkbox" id="he-nofill" checked> No fill</label>
           <div class="field narrow"><span class="lbl">Border color</span><div class="color"><input type="color" id="he-bc" value="#c8c6c4" aria-label="Border color"></div></div>
@@ -513,7 +524,13 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
           <button type="button" id="he-cw-equal">Equal columns</button>
           <label class="check"><input type="checkbox" id="he-tfit"> Fit table to its columns</label>
         </div>
-        <p class="note">Click inside a table cell to edit it. Use Table in this cell to put a new table inside it. Column width applies to the whole column; use px with Fit table to its columns for exact widths. Where two cells share an edge, the thicker border shows. Table changes can't be undone with Undo.</p>
+        <div class="he-tools-row">
+          <div class="field narrow"><label for="he-rh">Row height (px)</label><input type="number" id="he-rh" min="10" max="1000" placeholder="auto"></div>
+          <button type="button" class="primary" id="he-rh-ok">Set height</button>
+          <button type="button" id="he-rh-auto">Auto</button>
+          <button type="button" id="he-rh-all">Same height, all rows</button>
+        </div>
+        <p class="note">Click inside a table cell to edit it. Use Table in this cell to put a new table inside it. Column width applies to the whole column; use px with Fit table to its columns for exact widths. To merge a block of cells, click the first cell, Shift+click the last, then choose Merge selected. Merge right and Merge down join the cell with its neighbour. Row height sets a minimum height for the row. Unmerge restores a merged cell; Split cell cuts a single cell into columns and rows and resets that column's width. Where two cells share an edge, the thicker border shows. Table changes can't be undone with Undo.</p>
       </div>
       <div id="he-area" class="he-area" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Content" spellcheck="true"><p>Start typing here…</p></div>
       <p class="note" id="he-css-note" hidden>This content includes a &lt;style&gt; block. The preview shows it (scoped to this editor), and Copy HTML includes it. A SharePoint Text web part strips &lt;style&gt;, so paste into an Embed or Script Editor web part, or move the styles inline.</p>
@@ -1386,7 +1403,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   function outputHtml() {
     var c = area.cloneNode(true);
     ['contenteditable', 'spellcheck', 'role', 'aria-multiline', 'aria-label', 'id', 'class', 'style'].forEach(function (a) { c.removeAttribute(a); });
-    [].forEach.call(c.querySelectorAll('.he-cur'), function (n) { n.classList.remove('he-cur'); if (!n.getAttribute('class')) n.removeAttribute('class'); });
+    [].forEach.call(c.querySelectorAll('.he-cur,.he-sel'), function (n) { n.classList.remove('he-cur'); n.classList.remove('he-sel'); if (!n.getAttribute('class')) n.removeAttribute('class'); });
     var css = customCss.trim() ? '<style>\n' + customCss.trim() + '\n</style>\n' : '';
     return css + c.innerHTML.trim();
   }
@@ -1496,6 +1513,8 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     var cw = /^(\d+(?:\.\d+)?)(%|px)$/.exec(st.width || '');
     $('he-cw').value = cw ? cw[1] : '';
     if (cw) $('he-cwu').value = cw[2];
+    var rh = [].map.call(c.parentNode.cells, function (x) { return /^(\d+(?:\.\d+)?)px$/.exec(x.style.height || ''); }).filter(Boolean)[0];
+    $('he-rh').value = rh ? rh[1] : '';
     var tb = tableOf(c);
     $('he-tfit').checked = !!tb && tb.style.width === 'auto';
   }
@@ -1509,7 +1528,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     if (c) { c.classList.add('he-cur'); fillFields(c); }
     $('he-tools').hidden = !c;
   }
-  function clearCell() { if (curCell) curCell.classList.remove('he-cur'); curCell = null; $('he-tools').hidden = true; }
+  function clearCell() { if (curCell) curCell.classList.remove('he-cur'); curCell = null; $('he-tools').hidden = true; clearSel(); }
 
   $('he-tbl-ok').addEventListener('click', function () {
     var r = Math.max(1, Math.min(50, parseInt($('he-rows').value, 10) || 0)), c = Math.max(1, Math.min(20, parseInt($('he-cols').value, 10) || 0));
@@ -1553,10 +1572,167 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     closeForms();
   });
 
+
+  // ---------- grid helpers (tables with merged cells) ----------
+  function gridOf(t) {
+    var map = [], org = new Map(), rows = [].slice.call(t.rows), ncols = 0;
+    rows.forEach(function (tr, r) {
+      map[r] = map[r] || [];
+      var c = 0;
+      [].forEach.call(tr.cells, function (cell) {
+        while (map[r][c]) c++;
+        var cs = Math.max(1, cell.colSpan || 1), rs = Math.max(1, cell.rowSpan || 1);
+        org.set(cell, { r: r, c: c, cs: cs, rs: rs });
+        for (var i = 0; i < rs && r + i < rows.length; i++) {
+          map[r + i] = map[r + i] || [];
+          for (var j = 0; j < cs; j++) map[r + i][c + j] = cell;
+        }
+        c += cs;
+      });
+    });
+    map.forEach(function (m) { ncols = Math.max(ncols, m.length); });
+    return { map: map, org: org, rows: rows, nrows: rows.length, ncols: ncols };
+  }
+  function setSpan(cell, prop, n) {
+    if (n > 1) cell[prop] = n; else cell.removeAttribute(prop.toLowerCase());
+  }
+  function expandRect(g, r1, c1, r2, c2) {
+    var ch = true;
+    while (ch) {
+      ch = false;
+      for (var r = r1; r <= r2; r++) for (var c = c1; c <= c2; c++) {
+        var cell = g.map[r] && g.map[r][c]; if (!cell) continue;
+        var o = g.org.get(cell);
+        if (o.r < r1) { r1 = o.r; ch = true; }
+        if (o.c < c1) { c1 = o.c; ch = true; }
+        if (o.r + o.rs - 1 > r2) { r2 = o.r + o.rs - 1; ch = true; }
+        if (o.c + o.cs - 1 > c2) { c2 = o.c + o.cs - 1; ch = true; }
+      }
+    }
+    return { r1: r1, c1: c1, r2: r2, c2: c2 };
+  }
+  function cellsIn(g, rc) {
+    var seen = new Set(), out = [];
+    for (var r = rc.r1; r <= rc.r2; r++) for (var c = rc.c1; c <= rc.c2; c++) {
+      var x = g.map[r] && g.map[r][c];
+      if (x && !seen.has(x)) { seen.add(x); out.push(x); }
+    }
+    return out;
+  }
+  function isBlank(cell) { return !cell.textContent.replace(/[\s ]/g, '') && !cell.querySelector('img,table'); }
+  function colMap(g) { var m = new Map(); g.org.forEach(function (v, k) { m.set(k, v.c); }); return m; }
+  function insertInRow(tr, cell, c, cols) {
+    var before = null;
+    [].some.call(tr.cells, function (x) { if (cols.get(x) !== undefined && cols.get(x) >= c) { before = x; return true; } return false; });
+    tr.insertBefore(cell, before);
+    cols.set(cell, c);
+  }
+  function plainClone(ref, keepWidth) {
+    var n = cloneCell(ref, false);
+    if (keepWidth && ref.style.width) n.style.width = ref.style.width;
+    if (ref.style.height && ref.rowSpan < 2) n.style.height = ref.style.height;
+    return n;
+  }
+  function putCaret(cell) {
+    var rg = document.createRange();
+    rg.selectNodeContents(cell); rg.collapse(true);
+    area.focus();
+    var sl = getSelection(); sl.removeAllRanges(); sl.addRange(rg);
+    keepSel();
+    if (curCell === cell) fillFields(cell);
+  }
+
+  // multi-cell selection (Shift+click)
+  var selCells = [];
+  function clearSel() {
+    [].forEach.call(area.querySelectorAll('.he-sel'), function (n) { n.classList.remove('he-sel'); if (!n.getAttribute('class')) n.removeAttribute('class'); });
+    selCells = [];
+  }
+  area.addEventListener('mousedown', function (e) {
+    if (!e.shiftKey) { if (selCells.length) clearSel(); return; }
+    if (!curCell || !area.contains(curCell)) return;
+    var t = tableOf(curCell), el = e.target.nodeType === 1 ? e.target : e.target.parentNode;
+    var c = el && el.closest ? el.closest('td,th') : null;
+    while (c && tableOf(c) !== t) c = c.parentNode.closest('td,th');
+    if (!c || !area.contains(c)) return;
+    e.preventDefault();
+    var g = gridOf(t), a = g.org.get(curCell), b = g.org.get(c);
+    var rc = expandRect(g, Math.min(a.r, b.r), Math.min(a.c, b.c), Math.max(a.r + a.rs - 1, b.r + b.rs - 1), Math.max(a.c + a.cs - 1, b.c + b.cs - 1));
+    clearSel();
+    selCells = cellsIn(g, rc);
+    selCells.forEach(function (x) { x.classList.add('he-sel'); });
+    say(selCells.length > 1 ? selCells.length + ' cells selected. Choose Merge selected.' : 'Shift+click a different cell to select a block.');
+  });
+
+  function mergeRect(g, rc) {
+    var cells = cellsIn(g, rc);
+    if (cells.length < 2) return false;
+    var first = g.map[rc.r1][rc.c1];
+    cells.forEach(function (x) {
+      if (x === first || isBlank(x)) return;
+      if (isBlank(first)) first.innerHTML = '';
+      else first.appendChild(document.createElement('br'));
+      while (x.firstChild) first.appendChild(x.firstChild);
+    });
+    cells.forEach(function (x) { if (x !== first) x.remove(); });
+    setSpan(first, 'colSpan', rc.c2 - rc.c1 + 1);
+    setSpan(first, 'rowSpan', rc.r2 - rc.r1 + 1);
+    if (first.colSpan > 1) first.style.removeProperty('width');
+    if (!first.getAttribute('style')) first.removeAttribute('style');
+    return first;
+  }
+  function unmerge(cell) {
+    var t = tableOf(cell), g = gridOf(t), o = g.org.get(cell);
+    if (o.cs < 2 && o.rs < 2) return false;
+    var cols = colMap(g);
+    cell.removeAttribute('colspan'); cell.removeAttribute('rowspan');
+    for (var r = o.r; r < o.r + o.rs; r++) for (var c = o.c; c < o.c + o.cs; c++) {
+      if (r === o.r && c === o.c) continue;
+      insertInRow(g.rows[r], plainClone(cell, false), c, cols);
+    }
+    return true;
+  }
+  function splitCell(cell, k, m) {
+    var t = tableOf(cell), g = gridOf(t), o = g.org.get(cell), cols = colMap(g);
+    var block = [cell], seen = new Set([cell]);
+    if (k > 1) {
+      for (var r = 0; r < g.nrows; r++) {
+        var x = g.map[r] && g.map[r][o.c];
+        if (!x || seen.has(x)) continue;
+        seen.add(x); setSpan(x, 'colSpan', x.colSpan + k - 1); x.style.removeProperty('width');
+        if (!x.getAttribute('style')) x.removeAttribute('style');
+      }
+      cell.style.removeProperty('width');
+      if (!cell.getAttribute('style')) cell.removeAttribute('style');
+      var prev = cell;
+      for (var i = 1; i < k; i++) {
+        var n = plainClone(cell, false);
+        prev.parentNode.insertBefore(n, prev.nextSibling);
+        block.push(n); prev = n;
+      }
+    }
+    if (m > 1) {
+      var seen2 = new Set(block);
+      for (var c = 0; c < g.ncols; c++) {
+        var y = g.map[o.r] && g.map[o.r][c];
+        if (!y || seen2.has(y)) continue;
+        seen2.add(y); setSpan(y, 'rowSpan', y.rowSpan + m - 1);
+      }
+      var after = g.rows[o.r];
+      for (var j = 1; j < m; j++) {
+        var nt = document.createElement('tr');
+        block.forEach(function (b) { nt.appendChild(plainClone(b, false)); });
+        after.parentNode.insertBefore(nt, after.nextSibling);
+        after = nt;
+      }
+    }
+  }
+
   function cloneCell(ref, forceTd) {
     var n = document.createElement(forceTd ? 'td' : ref.tagName.toLowerCase());
     var st = ref.getAttribute('style'); if (st) n.setAttribute('style', st);
-    if (ref.colSpan > 1) n.colSpan = ref.colSpan;
+    n.style.removeProperty('width');
+    if (!n.getAttribute('style')) n.removeAttribute('style');
     n.innerHTML = '&nbsp;';
     return n;
   }
@@ -1565,7 +1741,11 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     if (scope === 'cell') return [curCell];
     if (scope === 'row') return [].slice.call(tr.cells);
     var rows = [].slice.call(t.rows);
-    if (scope === 'col') return rows.map(function (r) { return r.cells[idx]; }).filter(Boolean);
+    if (scope === 'col') {
+      var g = gridOf(t), o = g.org.get(curCell), seen = new Set(), out = [];
+      for (var r = 0; r < g.nrows; r++) { var x = g.map[r] && g.map[r][o.c]; if (x && !seen.has(x)) { seen.add(x); out.push(x); } }
+      return out;
+    }
     return rows.reduce(function (a, r) { return a.concat([].slice.call(r.cells)); }, []);
   }
 
@@ -1579,28 +1759,97 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
       $('he-rows').focus();
       return;
     }
+    var g = gridOf(t), o = g.org.get(curCell), cols = colMap(g), done = new Set(), b, c, r;
     if (act === 'rowAbove' || act === 'rowBelow') {
+      b = act === 'rowBelow' ? o.r + o.rs : o.r;
+      var refR = act === 'rowBelow' ? o.r + o.rs - 1 : o.r;
       n = document.createElement('tr');
-      [].forEach.call(tr.cells, function (c) { n.appendChild(cloneCell(c, true)); });
-      tr.parentNode.insertBefore(n, act === 'rowBelow' ? tr.nextSibling : tr);
+      for (c = 0; c < g.ncols; c++) {
+        var up = b > 0 && g.map[b - 1] ? g.map[b - 1][c] : null, dn = b < g.nrows && g.map[b] ? g.map[b][c] : null;
+        if (up && dn && up === dn) {
+          if (!done.has(up)) { done.add(up); setSpan(up, 'rowSpan', up.rowSpan + 1); }
+          continue;
+        }
+        var ref = (g.map[refR] && g.map[refR][c]) || curCell;
+        n.appendChild(plainClone(ref, ref.colSpan < 2));
+      }
+      var rowRef = g.rows[Math.min(b, g.nrows - 1)];
+      rowRef.parentNode.insertBefore(n, b < g.nrows ? g.rows[b] : rowRef.nextSibling);
     } else if (act === 'colLeft' || act === 'colRight') {
-      [].forEach.call(t.rows, function (r) {
-        var c = r.cells[Math.min(idx, r.cells.length - 1)]; if (!c) return;
-        var nc = cloneCell(c, false);
-        nc.style.removeProperty('width');
-        if (!nc.getAttribute('style')) nc.removeAttribute('style');
-        r.insertBefore(nc, act === 'colRight' ? c.nextSibling : c);
-      });
+      b = act === 'colRight' ? o.c + o.cs : o.c;
+      var refC = act === 'colRight' ? o.c + o.cs - 1 : o.c;
+      for (r = 0; r < g.nrows; r++) {
+        var L = b > 0 && g.map[r] ? g.map[r][b - 1] : null, R = b < g.ncols && g.map[r] ? g.map[r][b] : null;
+        if (L && R && L === R) {
+          if (!done.has(L)) { done.add(L); setSpan(L, 'colSpan', L.colSpan + 1); L.style.removeProperty('width'); if (!L.getAttribute('style')) L.removeAttribute('style'); }
+          continue;
+        }
+        insertInRow(g.rows[r], plainClone((g.map[r] && g.map[r][refC]) || curCell, false), b, cols);
+      }
     } else if (act === 'delRow') {
+      var ri = g.rows.indexOf(tr);
+      [].slice.call(tr.cells).forEach(function (cell) {
+        var oo = g.org.get(cell);
+        if (oo.rs > 1 && ri + 1 < g.nrows) {
+          setSpan(cell, 'rowSpan', oo.rs - 1);
+          insertInRow(g.rows[ri + 1], cell, oo.c, cols);
+        }
+      });
+      for (c = 0; c < g.ncols; c++) {
+        var above = g.map[ri] && g.map[ri][c];
+        if (above && !done.has(above) && g.org.get(above).r < ri) { done.add(above); setSpan(above, 'rowSpan', above.rowSpan - 1); }
+      }
       tr.remove(); if (!t.rows.length) t.remove();
       clearCell();
     } else if (act === 'delCol') {
-      [].forEach.call(t.rows, function (r) { if (r.cells[idx]) r.cells[idx].remove(); });
-      if (![].some.call(t.rows, function (r) { return r.cells.length; })) t.remove();
+      for (r = 0; r < g.nrows; r++) {
+        var x = g.map[r] && g.map[r][o.c];
+        if (!x || done.has(x)) continue;
+        done.add(x);
+        var ox = g.org.get(x);
+        if (ox.cs > 1) { setSpan(x, 'colSpan', ox.cs - 1); x.style.removeProperty('width'); if (!x.getAttribute('style')) x.removeAttribute('style'); }
+        else x.remove();
+      }
+      var g2 = gridOf(t);
+      g2.rows.forEach(function (row, i) { if (!row.cells.length && !(g2.map[i] && g2.map[i].some(Boolean))) row.remove(); });
+      if (!t.rows.length || !t.querySelector('td,th')) t.remove();
       clearCell();
     } else if (act === 'delTable') {
       t.remove(); clearCell();
+    } else if (act === 'mergeRight' || act === 'mergeDown' || act === 'mergeSel') {
+      var rc = null;
+      if (act === 'mergeSel') {
+        var sc = selCells.filter(function (x) { return g.org.has(x); });
+        if (sc.length < 2) { say('Click a cell, then Shift+click another cell to select a block first.'); return; }
+        var os = sc.map(function (x) { return g.org.get(x); });
+        rc = expandRect(g, Math.min.apply(0, os.map(function (v) { return v.r; })), Math.min.apply(0, os.map(function (v) { return v.c; })),
+          Math.max.apply(0, os.map(function (v) { return v.r + v.rs - 1; })), Math.max.apply(0, os.map(function (v) { return v.c + v.cs - 1; })));
+      } else if (act === 'mergeRight') {
+        if (o.c + o.cs >= g.ncols) { say('There is no cell to the right.'); return; }
+        rc = expandRect(g, o.r, o.c, o.r + o.rs - 1, o.c + o.cs);
+      } else {
+        if (o.r + o.rs >= g.nrows) { say('There is no cell below.'); return; }
+        rc = expandRect(g, o.r, o.c, o.r + o.rs, o.c + o.cs - 1);
+      }
+      clearSel();
+      var merged = mergeRect(g, rc);
+      if (!merged) { say('Nothing to merge.'); return; }
+      if (curCell !== merged) { var oldCur = curCell; curCell = null; if (oldCur && oldCur.isConnected) oldCur.classList.remove('he-cur'); }
+      putCaret(merged);
+      trackCell(merged);
+      say('Cells merged.');
+      return;
+    } else if (act === 'unmerge') {
+      if (!unmerge(curCell)) { say('This cell is not merged.'); return; }
+      fillFields(curCell); say('Cell unmerged.');
+    } else if (act === 'split') {
+      if (o.cs > 1 || o.rs > 1) { say('This cell is merged. Choose Unmerge first, or split a single cell.'); return; }
+      var kk = Math.max(1, Math.min(10, parseInt($('he-sp-c').value, 10) || 1)), mm = Math.max(1, Math.min(10, parseInt($('he-sp-r').value, 10) || 1));
+      if (kk < 2 && mm < 2) { say('Enter 2 or more columns or rows to split into.'); return; }
+      splitCell(curCell, kk, mm);
+      fillFields(curCell); say('Cell split into ' + kk + ' column' + (kk > 1 ? 's' : '') + ' by ' + mm + ' row' + (mm > 1 ? 's' : '') + '.');
     }
+    if (act !== 'delRow' && act !== 'delCol' && act !== 'delTable') clearSel();
     area.focus();
   });
 
@@ -1626,12 +1875,15 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 
   // ---------- column widths ----------
   function setColWidth(c, v) {
-    var t = tableOf(c), i = c.cellIndex;
-    [].forEach.call(t.rows, function (r) {
-      var x = r.cells[i]; if (!x) return;
+    var t = tableOf(c), g = gridOf(t), o = g.org.get(c);
+    if (o.cs > 1) return false;
+    for (var r = 0; r < g.nrows; r++) {
+      var x = g.map[r] && g.map[r][o.c];
+      if (!x || g.org.get(x).cs > 1) continue;
       if (v) x.style.width = v; else x.style.removeProperty('width');
       if (!x.getAttribute('style')) x.removeAttribute('style');
-    });
+    }
+    return true;
   }
   $('he-cw-ok').addEventListener('click', function () {
     if (!curCell) return;
@@ -1639,24 +1891,23 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     if (isNaN(n) || n <= 0) { say('Enter a width first, or choose Auto.'); return; }
     n = unit === '%' ? Math.min(100, n) : Math.min(2000, Math.max(10, n));
     n = Math.round(n * 10) / 10;
-    setColWidth(curCell, n + unit);
+    if (!setColWidth(curCell, n + unit)) { say('This cell spans several columns. Click a single-column cell to set a column width.'); return; }
     $('he-cw').value = n;
     var t = tableOf(curCell);
     say('Column width set.' + (unit === '%' && t.style.width === 'auto' ? ' Percent widths need the table at full width: untick Fit table to its columns.' : ''));
   });
   $('he-cw-auto').addEventListener('click', function () {
     if (!curCell) return;
-    setColWidth(curCell, ''); $('he-cw').value = '';
+    if (!setColWidth(curCell, '')) { say('This cell spans several columns. Click a single-column cell to reset a column width.'); return; }
+    $('he-cw').value = '';
     say('Column width reset to auto.');
   });
   $('he-cw-equal').addEventListener('click', function () {
     if (!curCell) return;
-    var t = tableOf(curCell), n = t.rows[0] ? t.rows[0].cells.length : 0;
+    var t = tableOf(curCell), g = gridOf(t), n = g.ncols;
     if (!n) return;
     var w = Math.round(1000 / n) / 10;
-    [].forEach.call(t.rows, function (r) {
-      [].forEach.call(r.cells, function (x) { x.style.width = w + '%'; });
-    });
+    g.org.forEach(function (o, x) { x.style.width = Math.round(w * o.cs * 10) / 10 + '%'; });
     t.style.width = '100%'; $('he-tfit').checked = false;
     $('he-cw').value = w; $('he-cwu').value = '%';
     say('Columns set to equal widths.');
@@ -1665,6 +1916,36 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     if (!curCell) return;
     tableOf(curCell).style.width = this.checked ? 'auto' : '100%';
     say(this.checked ? 'Table now fits its columns.' : 'Table is full width.');
+  });
+
+  // ---------- row height (a minimum: taller content still grows the row) ----------
+  function setRowHeight(tr, v) {
+    [].forEach.call(tr.cells, function (x) {
+      if (v) x.style.height = v; else x.style.removeProperty('height');
+      if (!x.getAttribute('style')) x.removeAttribute('style');
+    });
+  }
+  $('he-rh-ok').addEventListener('click', function () {
+    if (!curCell) return;
+    var n = parseFloat($('he-rh').value);
+    if (isNaN(n) || n <= 0) { say('Enter a height in px first, or choose Auto.'); return; }
+    n = Math.round(Math.min(1000, Math.max(10, n)) * 10) / 10;
+    setRowHeight(curCell.parentNode, n + 'px'); $('he-rh').value = n;
+    say('Row height set. It is a minimum: longer content still makes the row taller.');
+  });
+  $('he-rh-auto').addEventListener('click', function () {
+    if (!curCell) return;
+    setRowHeight(curCell.parentNode, ''); $('he-rh').value = '';
+    say('Row height reset to auto.');
+  });
+  $('he-rh-all').addEventListener('click', function () {
+    if (!curCell) return;
+    var n = parseFloat($('he-rh').value);
+    if (isNaN(n) || n <= 0) { say('Enter a height in px first.'); return; }
+    n = Math.round(Math.min(1000, Math.max(10, n)) * 10) / 10;
+    [].forEach.call(tableOf(curCell).rows, function (r) { setRowHeight(r, n + 'px'); });
+    $('he-rh').value = n;
+    say('All rows set to at least ' + n + 'px.');
   });
 
   function showingSource() { return !src.hidden; }
