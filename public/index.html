@@ -105,6 +105,11 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .mb-suite { height: 34px; background: #0b2a5b; color: #cfe0ff; font-size: 12px; display: flex; align-items: center; padding: 0 12px; }
 .mb-head { height: 64px; background: linear-gradient(90deg, #00194A, #0b4fb3 60%, #0271EB); color: #fff; display: flex; align-items: center; padding: 0 18px; font-size: 22px; font-weight: 300; white-space: nowrap; }
 .mb-body { height: 36px; background: #faf9f8; }
+.editor table { border-collapse: collapse; margin: 4px 0; }
+.editor td { min-width: 28px; vertical-align: top; outline: 1px dashed rgba(127,127,127,.55); outline-offset: -1px; }
+.toolbar input[type="number"] { width: 58px; }
+.toolbar select { width: auto; }
+.toolbar .check { white-space: nowrap; }
 </style>
 
 </head>
@@ -226,8 +231,28 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
             <button type="button" id="link-add">Add link</button>
             <button type="button" id="link-remove">Remove link</button>
           </div>
+          <div class="toolbar" role="group" aria-label="Insert table">
+            <span class="lbl">Table</span>
+            <input type="number" id="tb-rows" min="1" max="20" value="2" aria-label="Rows" title="Rows">
+            <span class="lbl" aria-hidden="true">&times;</span>
+            <input type="number" id="tb-cols" min="1" max="8" value="2" aria-label="Columns" title="Columns">
+            <label class="check"><input type="checkbox" id="tb-border" checked> Border</label>
+            <input type="color" id="tb-color" value="#00194a" aria-label="Table border color" title="Border color">
+            <select id="tb-width" aria-label="Table width"><option value="100%">Full width</option><option value="auto">Fit content</option></select>
+            <span class="lbl">Pad</span>
+            <input type="number" id="tb-pad" min="0" max="30" value="6" aria-label="Cell padding in pixels" title="Cell padding (px)">
+            <button type="button" id="tb-insert">Insert table</button>
+          </div>
+          <div class="toolbar" role="group" aria-label="Edit table">
+            <span class="lbl">In a cell</span>
+            <button type="button" id="tb-addrow">+ Row</button>
+            <button type="button" id="tb-addcol">+ Column</button>
+            <button type="button" id="tb-delrow">&minus; Row</button>
+            <button type="button" id="tb-delcol">&minus; Column</button>
+            <button type="button" id="tb-deltable">Delete table</button>
+          </div>
           <div id="editor" class="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="body-lbl" spellcheck="true"></div>
-          <p class="note" id="editor-note">Select text, then use the toolbar. Press Enter for a new line.</p>
+          <p class="note" id="editor-note">Select text, then use the toolbar. Press Enter for a new line. Tab moves between table cells.</p>
         </div>
         <div class="field narrow"><label for="bsize">Body px</label><input type="number" id="bsize" min="10" max="32" value="14"></div>
       </div>
@@ -555,7 +580,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     if (/^www\./i.test(h)) return 'https://' + h;
     return null;
   }
-  function isBlock(n) { return n && n.nodeType === 1 && /^(DIV|P|UL|OL|LI|BLOCKQUOTE|H[1-6])$/.test(n.nodeName); }
+  function isBlock(n) { return n && n.nodeType === 1 && /^(DIV|P|UL|OL|LI|BLOCKQUOTE|TABLE|H[1-6])$/.test(n.nodeName); }
 
   // Turns the editor contents into clean, inline-styled HTML for SharePoint.
   function serializeEditor(fg, linkDefault, newTab) {
@@ -599,6 +624,21 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
           return '<a href="' + esc(href) + '"' + (newTab ? ' target="_blank" rel="noopener noreferrer"' : '') +
             ' style="color:' + acol + '; text-decoration:underline;">' + content + '</a>';
         }
+        case 'table': {
+          var tw = n.getAttribute('data-w') === 'auto' ? 'auto' : '100%';
+          return '<table border="0" cellpadding="0" cellspacing="0" style="width:' + tw + '; border-collapse:collapse;">' + kids(n, ctx) + '</table>';
+        }
+        case 'tbody': case 'thead': case 'tfoot': return '<tbody>' + kids(n, ctx) + '</tbody>';
+        case 'tr': return '<tr>' + kids(n, ctx) + '</tr>';
+        case 'td': case 'th': {
+          var tb = n.parentNode && n.parentNode.parentNode && n.closest ? n.closest('table') : null;
+          var bd = tb ? hex(tb.getAttribute('data-bd') || '', '') : '';
+          var pd = tb ? parseInt(tb.getAttribute('data-pad'), 10) : 6;
+          if (isNaN(pd)) pd = 6;
+          var cin = kids(n, ctx).replace(/(<br>)+$/, '');
+          if (!cin) cin = '&nbsp;';
+          return '<td style="padding:' + pd + 'px; vertical-align:top;' + (bd ? ' border:1px solid ' + bd + ';' : '') + '">' + cin + '</td>';
+        }
         case 'ul': case 'ol':
           return '<' + t + ' style="margin:6px 0 6px 22px; padding:0;">' + kids(n, ctx) + '</' + t + '>';
         case 'li': return '<li style="margin:2px 0;">' + kids(n, ctx) + '</li>';
@@ -612,7 +652,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
       }
     }
     var out = kids($('editor'), { color: fg, explicit: false });
-    out = out.replace(/<br>(<(?:ul|ol)\b)/g, '$1').replace(/(<\/(?:ul|ol)>)<br>/g, '$1');
+    out = out.replace(/<br>(<(?:ul|ol|table)\b)/g, '$1').replace(/(<\/(?:ul|ol|table)>)<br>/g, '$1');
     return out.replace(/^(<br>)+/, '').replace(/(<br>)+$/, '');
   }
 
@@ -683,7 +723,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 
   (function setupEditor() {
     var ed = $('editor'), note = $('editor-note'), saved = null;
-    var HINT = 'Select text, then use the toolbar. Press Enter for a new line.';
+    var HINT = 'Select text, then use the toolbar. Press Enter for a new line. Tab moves between table cells.';
     ed.innerHTML = 'Effective Wednesday, April 8th, when creating an Escalate to Dispatch (ETD), we will warm transfer the customer to the National Field Support (NFS) team using the number provided in the alert on the ETRD screen in Agent OS. <a href="https://example.com/more-info">Click here for more information.</a>';
 
     document.addEventListener('selectionchange', function () {
@@ -751,6 +791,122 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     });
     ed.addEventListener('input', render);
     ed.addEventListener('blur', function () {});
+
+    // ---- tables ----
+    function curCell() {
+      var n = saved ? saved.startContainer : null;
+      while (n && n !== ed) { if (n.nodeName === 'TD' || n.nodeName === 'TH') return n; n = n.parentNode; }
+      return null;
+    }
+    function caretIn(el) {
+      var r = document.createRange();
+      r.selectNodeContents(el);
+      r.collapse(true);
+      var s = window.getSelection();
+      ed.focus();
+      s.removeAllRanges();
+      s.addRange(r);
+      saved = r.cloneRange();
+    }
+    function tableOpts(tb) {
+      return { bd: tb.getAttribute('data-bd') || '', pad: parseInt(tb.getAttribute('data-pad'), 10) || 0 };
+    }
+    function newCell(tb) {
+      var o = tableOpts(tb), td = document.createElement('td');
+      td.setAttribute('style', 'padding:' + o.pad + 'px;vertical-align:top;' + (o.bd ? 'border:1px solid ' + o.bd + ';' : ''));
+      td.innerHTML = '<br>';
+      return td;
+    }
+    function tableHtml(rows, cols, o) {
+      var cell = '<td style="padding:' + o.pad + 'px;vertical-align:top;' + (o.bd ? 'border:1px solid ' + o.bd + ';' : '') + '"><br></td>';
+      var tr = '<tr>' + new Array(cols + 1).join(cell) + '</tr>';
+      return '<table data-new="1" data-bd="' + o.bd + '" data-w="' + o.w + '" data-pad="' + o.pad + '" style="width:' + (o.w === 'auto' ? 'auto' : '100%') + ';border-collapse:collapse;"><tbody>' + new Array(rows + 1).join(tr) + '</tbody></table>';
+    }
+    document.querySelectorAll('#controls .toolbar button').forEach(function (b) {
+      b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    });
+
+    $('tb-insert').addEventListener('click', function () {
+      var o = {
+        bd: $('tb-border').checked ? hex($('tb-color').value, '#00194A') : '',
+        w: $('tb-width').value === 'auto' ? 'auto' : '100%',
+        pad: num('tb-pad', 0, 30, 6)
+      };
+      restore();
+      document.execCommand('insertHTML', false, tableHtml(num('tb-rows', 1, 20, 2), num('tb-cols', 1, 8, 2), o) + '<br>');
+      var t = ed.querySelector('table[data-new]');
+      if (t) {
+        t.removeAttribute('data-new');
+        var first = t.querySelector('td');
+        if (first) caretIn(first);
+      }
+      say('Table added. Click a cell and use Insert table again to nest another table inside it.');
+      render();
+    });
+
+    function withCell(fn) {
+      var c = curCell();
+      if (!c) { say('Click inside a table cell first.'); return; }
+      var tr = c.parentNode, tb = tr.closest('table');
+      if (!tb) return;
+      fn(c, tr, tb);
+      say();
+      render();
+    }
+    $('tb-addrow').addEventListener('click', function () {
+      withCell(function (c, tr, tb) {
+        var nr = document.createElement('tr');
+        for (var i = 0; i < tr.cells.length; i++) nr.appendChild(newCell(tb));
+        tr.parentNode.insertBefore(nr, tr.nextSibling);
+        caretIn(nr.cells[Math.min(c.cellIndex, nr.cells.length - 1)]);
+      });
+    });
+    $('tb-addcol').addEventListener('click', function () {
+      withCell(function (c, tr, tb) {
+        var idx = c.cellIndex, target = null;
+        for (var i = 0; i < tb.rows.length; i++) {
+          var cell = newCell(tb), row = tb.rows[i];
+          row.insertBefore(cell, row.cells[idx + 1] || null);
+          if (row === tr) target = cell;
+        }
+        if (target) caretIn(target);
+      });
+    });
+    $('tb-delrow').addEventListener('click', function () {
+      withCell(function (c, tr, tb) {
+        if (tb.rows.length <= 1) { tb.parentNode.removeChild(tb); saved = null; return; }
+        var next = tr.nextElementSibling || tr.previousElementSibling, idx = c.cellIndex;
+        tr.parentNode.removeChild(tr);
+        if (next) caretIn(next.cells[Math.min(idx, next.cells.length - 1)]);
+      });
+    });
+    $('tb-delcol').addEventListener('click', function () {
+      withCell(function (c, tr, tb) {
+        var idx = c.cellIndex;
+        if (tr.cells.length <= 1) { tb.parentNode.removeChild(tb); saved = null; return; }
+        var i;
+        for (i = 0; i < tb.rows.length; i++) { if (tb.rows[i].cells[idx]) tb.rows[i].removeChild(tb.rows[i].cells[idx]); }
+        caretIn(tr.cells[Math.min(idx, tr.cells.length - 1)]);
+      });
+    });
+    $('tb-deltable').addEventListener('click', function () {
+      withCell(function (c, tr, tb) { tb.parentNode.removeChild(tb); saved = null; });
+    });
+
+    // Tab and Shift+Tab move between cells; at the first or last cell they leave the editor as usual.
+    ed.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab') return;
+      var s = window.getSelection();
+      var n = s && s.rangeCount ? s.anchorNode : null, c = null;
+      while (n && n !== ed) { if (n.nodeName === 'TD') { c = n; break; } n = n.parentNode; }
+      if (!c) return;
+      var tb = c.closest('table'), cells = [], i, j;
+      for (i = 0; i < tb.rows.length; i++) for (j = 0; j < tb.rows[i].cells.length; j++) cells.push(tb.rows[i].cells[j]);
+      var at = cells.indexOf(c), to = at + (e.shiftKey ? -1 : 1);
+      if (to < 0 || to >= cells.length) return;
+      e.preventDefault();
+      caretIn(cells[to]);
+    });
   })();
   (function buildGrid() {
     var g = $('icon-grid');
