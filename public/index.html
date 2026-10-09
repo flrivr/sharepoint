@@ -473,6 +473,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
         <button type="button" data-close>Cancel</button>
       </div>
       <div class="he-form" id="he-tblform">
+        <span class="lbl" id="he-nest-note" hidden style="flex-basis:100%">The new table goes inside the selected cell.</span>
         <div class="field narrow"><label for="he-rows">Rows</label><input type="number" id="he-rows" min="1" max="50" value="3"></div>
         <div class="field narrow"><label for="he-cols">Columns</label><input type="number" id="he-cols" min="1" max="20" value="3"></div>
         <label class="check"><input type="checkbox" id="he-hdr" checked> Header row</label>
@@ -486,6 +487,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
           <button type="button" data-tbl="rowBelow">Row below</button>
           <button type="button" data-tbl="colLeft">Column left</button>
           <button type="button" data-tbl="colRight">Column right</button>
+          <button type="button" data-tbl="nest">Table in this cell</button>
           <button type="button" data-tbl="delRow">Delete row</button>
           <button type="button" data-tbl="delCol">Delete column</button>
           <button type="button" data-tbl="delTable">Delete table</button>
@@ -503,7 +505,15 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
             <select id="he-scope"><option value="cell">This cell</option><option value="row">This row</option><option value="col">This column</option><option value="table">Whole table</option></select></div>
           <button type="button" class="primary" id="he-cell-ok">Apply</button>
         </div>
-        <p class="note">Click inside a table cell to edit it. Where two cells share an edge, the thicker border shows. Table changes can't be undone with Undo.</p>
+        <div class="he-tools-row">
+          <div class="field narrow"><label for="he-cw">Column width</label><input type="number" id="he-cw" min="1" max="2000" placeholder="auto"></div>
+          <div class="field narrow"><label for="he-cwu">Unit</label><select id="he-cwu"><option value="%">%</option><option value="px">px</option></select></div>
+          <button type="button" class="primary" id="he-cw-ok">Set width</button>
+          <button type="button" id="he-cw-auto">Auto</button>
+          <button type="button" id="he-cw-equal">Equal columns</button>
+          <label class="check"><input type="checkbox" id="he-tfit"> Fit table to its columns</label>
+        </div>
+        <p class="note">Click inside a table cell to edit it. Use Table in this cell to put a new table inside it. Column width applies to the whole column; use px with Fit table to its columns for exact widths. Where two cells share an edge, the thicker border shows. Table changes can't be undone with Undo.</p>
       </div>
       <div id="he-area" class="he-area" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Content" spellcheck="true"><p>Start typing here…</p></div>
       <p class="note" id="he-css-note" hidden>This content includes a &lt;style&gt; block. The preview shows it (scoped to this editor), and Copy HTML includes it. A SharePoint Text web part strips &lt;style&gt;, so paste into an Embed or Script Editor web part, or move the styles inline.</p>
@@ -1322,7 +1332,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var area = $('he-area'), src = $('he-src-view'), status = $('he-status'), saved = null, timer;
+  var area = $('he-area'), src = $('he-src-view'), status = $('he-status'), saved = null, timer, nestMode = false;
 
   function say(m) { status.textContent = m; clearTimeout(timer); timer = setTimeout(function () { status.textContent = ''; }, 3000); }
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -1402,7 +1412,10 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     document.execCommand(cmd, false, val || null);
     keepSel();
   }
-  function closeForms() { [].forEach.call(document.querySelectorAll('.he-form'), function (f) { f.classList.remove('open'); }); }
+  function closeForms() {
+    [].forEach.call(document.querySelectorAll('.he-form'), function (f) { f.classList.remove('open'); });
+    nestMode = false; $('he-nest-note').hidden = true;
+  }
 
   ['keyup', 'mouseup', 'input'].forEach(function (n) { area.addEventListener(n, keepSel); });
 
@@ -1480,6 +1493,11 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
       $('he-bw-' + k).value = none ? 0 : (w ? px(w) : 1);
     });
     $('he-bw-all').value = '';
+    var cw = /^(\d+(?:\.\d+)?)(%|px)$/.exec(st.width || '');
+    $('he-cw').value = cw ? cw[1] : '';
+    if (cw) $('he-cwu').value = cw[2];
+    var tb = tableOf(c);
+    $('he-tfit').checked = !!tb && tb.style.width === 'auto';
   }
   function trackCell(node) {
     var el = node && (node.nodeType === 1 ? node : node.parentNode);
@@ -1502,15 +1520,35 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
       for (var j = 0; j < c; j++) t += (hdr && i === 0) ? '<th>Heading</th>' : '<td>&nbsp;</td>';
       t += '</tr>';
     }
-    exec('insertHTML', t + '</tbody></table><p><br></p>');
-    // styles are applied afterwards because insertHTML drops borders and padding
-    var tbl = area.querySelector('#he-new-tbl');
+    var nest = nestMode && curCell && area.contains(curCell), tbl;
+    if (nest) {
+      var holder = document.createElement('div');
+      holder.innerHTML = t + '</tbody></table>';
+      tbl = holder.firstChild;
+      var blank = !curCell.textContent.replace(/[\s\u00a0]/g, '') && !curCell.querySelector('img,table');
+      if (blank) curCell.textContent = '';
+      curCell.appendChild(tbl);
+    } else {
+      exec('insertHTML', t + '</tbody></table><p><br></p>');
+      // styles are applied afterwards because insertHTML drops borders and padding
+      tbl = area.querySelector('#he-new-tbl');
+    }
     if (tbl) {
       tbl.removeAttribute('id');
       tbl.setAttribute('style', 'border-collapse:collapse;width:100%');
       [].forEach.call(tbl.querySelectorAll('td,th'), function (cell) {
         cell.setAttribute('style', 'border:1px solid #c8c6c4;padding:4px 8px' + (cell.tagName === 'TH' ? ';background-color:#f3f2f1;text-align:left' : ''));
       });
+      if (nest) {   // continue typing in the first cell of the new table
+        var first = tbl.querySelector('td,th');
+        if (first) {
+          var rg = document.createRange();
+          rg.selectNodeContents(first); rg.collapse(true);
+          area.focus();
+          var sl = getSelection(); sl.removeAllRanges(); sl.addRange(rg);
+          keepSel();
+        }
+      }
     }
     closeForms();
   });
@@ -1534,6 +1572,13 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   $('he-tools').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-tbl]'); if (!b || !curCell) return;
     var act = b.dataset.tbl, tr = curCell.parentNode, t = tableOf(curCell), idx = curCell.cellIndex, n;
+    if (act === 'nest') {
+      closeForms();
+      nestMode = true; $('he-nest-note').hidden = false;
+      $('he-tblform').classList.add('open');
+      $('he-rows').focus();
+      return;
+    }
     if (act === 'rowAbove' || act === 'rowBelow') {
       n = document.createElement('tr');
       [].forEach.call(tr.cells, function (c) { n.appendChild(cloneCell(c, true)); });
@@ -1541,7 +1586,10 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     } else if (act === 'colLeft' || act === 'colRight') {
       [].forEach.call(t.rows, function (r) {
         var c = r.cells[Math.min(idx, r.cells.length - 1)]; if (!c) return;
-        r.insertBefore(cloneCell(c, false), act === 'colRight' ? c.nextSibling : c);
+        var nc = cloneCell(c, false);
+        nc.style.removeProperty('width');
+        if (!nc.getAttribute('style')) nc.removeAttribute('style');
+        r.insertBefore(nc, act === 'colRight' ? c.nextSibling : c);
       });
     } else if (act === 'delRow') {
       tr.remove(); if (!t.rows.length) t.remove();
@@ -1575,6 +1623,49 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     say('Cell style applied.');
   });
   $('he-bg').addEventListener('input', function () { $('he-nofill').checked = false; });
+
+  // ---------- column widths ----------
+  function setColWidth(c, v) {
+    var t = tableOf(c), i = c.cellIndex;
+    [].forEach.call(t.rows, function (r) {
+      var x = r.cells[i]; if (!x) return;
+      if (v) x.style.width = v; else x.style.removeProperty('width');
+      if (!x.getAttribute('style')) x.removeAttribute('style');
+    });
+  }
+  $('he-cw-ok').addEventListener('click', function () {
+    if (!curCell) return;
+    var unit = $('he-cwu').value === 'px' ? 'px' : '%', n = parseFloat($('he-cw').value);
+    if (isNaN(n) || n <= 0) { say('Enter a width first, or choose Auto.'); return; }
+    n = unit === '%' ? Math.min(100, n) : Math.min(2000, Math.max(10, n));
+    n = Math.round(n * 10) / 10;
+    setColWidth(curCell, n + unit);
+    $('he-cw').value = n;
+    var t = tableOf(curCell);
+    say('Column width set.' + (unit === '%' && t.style.width === 'auto' ? ' Percent widths need the table at full width: untick Fit table to its columns.' : ''));
+  });
+  $('he-cw-auto').addEventListener('click', function () {
+    if (!curCell) return;
+    setColWidth(curCell, ''); $('he-cw').value = '';
+    say('Column width reset to auto.');
+  });
+  $('he-cw-equal').addEventListener('click', function () {
+    if (!curCell) return;
+    var t = tableOf(curCell), n = t.rows[0] ? t.rows[0].cells.length : 0;
+    if (!n) return;
+    var w = Math.round(1000 / n) / 10;
+    [].forEach.call(t.rows, function (r) {
+      [].forEach.call(r.cells, function (x) { x.style.width = w + '%'; });
+    });
+    t.style.width = '100%'; $('he-tfit').checked = false;
+    $('he-cw').value = w; $('he-cwu').value = '%';
+    say('Columns set to equal widths.');
+  });
+  $('he-tfit').addEventListener('change', function () {
+    if (!curCell) return;
+    tableOf(curCell).style.width = this.checked ? 'auto' : '100%';
+    say(this.checked ? 'Table now fits its columns.' : 'Table is full width.');
+  });
 
   function showingSource() { return !src.hidden; }
   $('he-toggle').addEventListener('click', function () {
