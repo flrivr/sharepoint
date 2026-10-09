@@ -251,6 +251,14 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
             <button type="button" id="tb-delcol">&minus; Column</button>
             <button type="button" id="tb-deltable">Delete table</button>
           </div>
+          <div class="toolbar" role="group" aria-label="Column width">
+            <span class="lbl">Column width</span>
+            <input type="number" id="tb-cw" min="1" max="1500" placeholder="auto" aria-label="Width of the column the cursor is in" title="Width of the column the cursor is in">
+            <select id="tb-cwu" aria-label="Width unit"><option value="%">%</option><option value="px">px</option></select>
+            <button type="button" id="tb-setw">Set width</button>
+            <button type="button" id="tb-autow">Auto</button>
+            <button type="button" id="tb-equal">Equal columns</button>
+          </div>
           <div id="editor" class="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="body-lbl" spellcheck="true"></div>
           <p class="note" id="editor-note">Select text, then use the toolbar. Press Enter for a new line. Tab moves between table cells.</p>
         </div>
@@ -637,7 +645,8 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
           if (isNaN(pd)) pd = 6;
           var cin = kids(n, ctx).replace(/(<br>)+$/, '');
           if (!cin) cin = '&nbsp;';
-          return '<td style="padding:' + pd + 'px; vertical-align:top;' + (bd ? ' border:1px solid ' + bd + ';' : '') + '">' + cin + '</td>';
+          var cw = n.getAttribute('data-cw') || '';
+          return '<td style="padding:' + pd + 'px; vertical-align:top;' + (/^\d+(\.\d+)?(%|px)$/.test(cw) ? ' width:' + cw + ';' : '') + (bd ? ' border:1px solid ' + bd + ';' : '') + '">' + cin + '</td>';
         }
         case 'ul': case 'ol':
           return '<' + t + ' style="margin:6px 0 6px 22px; padding:0;">' + kids(n, ctx) + '</' + t + '>';
@@ -730,7 +739,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
       var s = window.getSelection();
       if (!s || !s.rangeCount) return;
       var r = s.getRangeAt(0);
-      if (ed.contains(r.commonAncestorContainer)) saved = r.cloneRange();
+      if (ed.contains(r.commonAncestorContainer)) { saved = r.cloneRange(); syncWidthFields(); }
     });
     function restore() {
       ed.focus();
@@ -811,9 +820,11 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     function tableOpts(tb) {
       return { bd: tb.getAttribute('data-bd') || '', pad: parseInt(tb.getAttribute('data-pad'), 10) || 0 };
     }
-    function newCell(tb) {
+    function newCell(tb, from) {
       var o = tableOpts(tb), td = document.createElement('td');
       td.setAttribute('style', 'padding:' + o.pad + 'px;vertical-align:top;' + (o.bd ? 'border:1px solid ' + o.bd + ';' : ''));
+      var cw = from ? from.getAttribute('data-cw') : '';
+      if (cw) { td.setAttribute('data-cw', cw); td.style.width = cw; }
       td.innerHTML = '<br>';
       return td;
     }
@@ -849,14 +860,14 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
       if (!c) { say('Click inside a table cell first.'); return; }
       var tr = c.parentNode, tb = tr.closest('table');
       if (!tb) return;
-      fn(c, tr, tb);
-      say();
+      say(fn(c, tr, tb));
+      syncWidthFields();
       render();
     }
     $('tb-addrow').addEventListener('click', function () {
       withCell(function (c, tr, tb) {
         var nr = document.createElement('tr');
-        for (var i = 0; i < tr.cells.length; i++) nr.appendChild(newCell(tb));
+        for (var i = 0; i < tr.cells.length; i++) nr.appendChild(newCell(tb, tr.cells[i]));
         tr.parentNode.insertBefore(nr, tr.nextSibling);
         caretIn(nr.cells[Math.min(c.cellIndex, nr.cells.length - 1)]);
       });
@@ -891,6 +902,43 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     });
     $('tb-deltable').addEventListener('click', function () {
       withCell(function (c, tr, tb) { tb.parentNode.removeChild(tb); saved = null; });
+    });
+
+    // ---- column widths ----
+    function setColWidth(tb, idx, val) {
+      for (var i = 0; i < tb.rows.length; i++) {
+        var cell = tb.rows[i].cells[idx];
+        if (!cell) continue;
+        if (val) { cell.setAttribute('data-cw', val); cell.style.width = val; }
+        else { cell.removeAttribute('data-cw'); cell.style.removeProperty('width'); }
+      }
+    }
+    function syncWidthFields() {
+      var c = curCell(), v = c ? (c.getAttribute('data-cw') || '') : '';
+      var m = /^(\d+(?:\.\d+)?)(%|px)$/.exec(v);
+      $('tb-cw').value = m ? m[1] : '';
+      if (m) $('tb-cwu').value = m[2];
+    }
+    var PCT_NOTE = 'Percent widths work best when the table is set to Full width.';
+    $('tb-setw').addEventListener('click', function () {
+      var unit = $('tb-cwu').value === 'px' ? 'px' : '%';
+      var n = parseFloat($('tb-cw').value);
+      if (isNaN(n) || n <= 0) { say('Enter a width first, or choose Auto.'); return; }
+      n = unit === '%' ? Math.min(100, n) : Math.min(1500, Math.max(10, n));
+      withCell(function (c, tr, tb) {
+        setColWidth(tb, c.cellIndex, (Math.round(n * 10) / 10) + unit);
+        return unit === '%' && tb.getAttribute('data-w') === 'auto' ? PCT_NOTE : null;
+      });
+    });
+    $('tb-autow').addEventListener('click', function () {
+      withCell(function (c, tr, tb) { setColWidth(tb, c.cellIndex, ''); });
+    });
+    $('tb-equal').addEventListener('click', function () {
+      withCell(function (c, tr, tb) {
+        var n = tb.rows[0].cells.length, w = (Math.round(1000 / n) / 10) + '%';
+        for (var i = 0; i < n; i++) setColWidth(tb, i, w);
+        return tb.getAttribute('data-w') === 'auto' ? PCT_NOTE : null;
+      });
     });
 
     // Tab and Shift+Tab move between cells; at the first or last cell they leave the editor as usual.
