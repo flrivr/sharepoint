@@ -25,3 +25,10 @@ The HTML editor tab has an **Insert** row for styled blocks in the navy and blue
 - **Section heading**: a heading with the accent bar and an optional subtitle.
 
 Every component uses inline styles, so the copied HTML needs no `<style>` block. Paste it into an Embed or Script Editor web part; the modern Text web part strips most styling. Click a component in the editor to move, duplicate or remove it.
+
+## Version label
+
+The header shows the version (for example `v1.5.0 · Nov 6, 2026 · build 12 · 5d4206f`).
+
+- The **version number** (`v1.5.0`) is set by hand in `public/index.html`. Raise it when you ship a change: the middle number for a new feature, the last number for a fix.
+- The **date, build number and commit** are filled in automatically by the deploy workflow, so they always match what is live. A copy opened straight from disk shows "local copy" instead.

@@ -134,6 +134,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .he-picker button[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 1px; background: #eaf2ff; }
 .he-cprev { flex-basis: 100%; min-height: 60px; padding: 16px; background: #fff; color: #323130; border: 1px dashed var(--line); border-radius: 6px; overflow: auto; }
 .he-cprev.dark { background: linear-gradient(115deg, #002139, #09314E 48%, #0076BC); }
+header h1 .ver { display: inline-block; margin-left: 8px; padding: 2px 9px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); color: var(--muted); font-family: var(--font-code); font-size: 12px; font-weight: 400; vertical-align: middle; white-space: nowrap; }
 .he-area [data-spc] { outline: 1px dashed transparent; }
 .he-area [data-spc]:hover { outline-color: rgba(11,99,214,.35); }
 </style>
@@ -142,7 +143,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 <body>
 <div class="wrap">
   <header>
-    <h1>Alert Panel Builder</h1>
+    <h1>Alert Panel Builder <span class="ver" id="app-version" title="Version, deploy date, build number and commit">v1.5.0<span id="app-build"> &middot; __BUILD_INFO__</span></span></h1>
     <p>Tools for the Bridgeton Strong site: a gradient alert panel for a content web part, the header message script, and a message bar above the site header. Sample text is a placeholder to replace.</p>
   </header>
 
@@ -577,6 +578,12 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   </div>
 </div>
 
+<script>
+(function () {   // the deploy workflow fills in the build info; a local copy shows just the version
+  var b = document.getElementById('app-build');
+  if (b && b.textContent.indexOf('__BUILD_') !== -1) b.textContent = ' \u00b7 local copy';
+})();
+</script>
 <script>
 (function () {
   var BASE = 'https://chartercom.sharepoint.com/sites/BridgetonStrong/SiteAssets/icons/Alert%20Panel%20Icons/';

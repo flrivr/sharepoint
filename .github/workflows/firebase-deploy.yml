@@ -7,6 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Stamp build info on the page
+        run: |
+          INFO="$(TZ=America/Chicago date '+%b %-d, %Y') · build ${GITHUB_RUN_NUMBER} · ${GITHUB_SHA::7}"
+          sed -i "s|__BUILD_INFO__|${INFO}|g" public/index.html
+          grep -o 'id="app-build">[^<]*' public/index.html
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
