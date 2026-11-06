@@ -127,6 +127,8 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .he-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .he-comp-bar > strong { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-right: 2px; }
 .he-cform textarea { font: inherit; }
+.he-scheme { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-left: auto; }
+.he-scheme select { width: auto; }
 .he-cform .he-sub { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; flex-basis: 100%; }
 .he-cform .he-sub[hidden] { display: none; }
 .he-picker { flex-basis: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 4px; }
@@ -620,16 +622,55 @@ window.SPComponentKit = function (cfg) {
   function closeAll() { closeForms(); if (cfg.closeOther) cfg.closeOther(); }
 
   var FONT = "'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif";
-  var C = { navy: '#002139', navy2: '#09314E', navy3: '#164364', blue: '#0076BC', blueLt: '#5AB2E3', steel: '#3F6E90',
-            sky: '#CBDCE7', mist: '#EEF4F8', ink: '#323130', line: '#E3E8EC', spark: '#0A5BD3', sparkLt: '#C9DBFF' };
+  // Two color schemes: the Bridgeton brand colors (default) and the Service Enhancements page colors.
+  var SCHEMES = {
+    brand: { navy: '#00194A', navy2: '#00194A', navy3: '#00194A', blue: '#005EFF', blueLt: '#6FA0FF', steel: '#4A5A7A',
+             sky: '#D5D5D5', mist: '#EEF3FF', ink: '#323130', line: '#D5D5D5', spark: '#005EFF', sparkA: '#3D85FF', sparkLt: '#D6E4FF',
+             sparkBg: '#F2F6FF', sparkLine: '#C9D9FF', green: '#03C252', greenBg: '#EAFAF1', greenT: '#00194A', gold: '#FFCB3E', goldBg: '#FFF8E0', goldT: '#00194A' },
+    se:    { navy: '#002139', navy2: '#09314E', navy3: '#164364', blue: '#0076BC', blueLt: '#5AB2E3', steel: '#3F6E90',
+             sky: '#CBDCE7', mist: '#EEF4F8', ink: '#323130', line: '#E3E8EC', spark: '#0A5BD3', sparkA: '#1E7BFF', sparkLt: '#C9DBFF',
+             sparkBg: '#F3F7FF', sparkLine: '#D7E3FB', green: '#138A4B', greenBg: '#EEF8F1', greenT: '#0B5D33', gold: '#E8A317', goldBg: '#FFF9EC', goldT: '#7A4B00' }
+  };
+  var C = {};
+  function setScheme(k) { var s = SCHEMES[k] || SCHEMES.brand; Object.keys(s).forEach(function (x) { C[x] = s[x]; }); }
+  setScheme('brand');
   var SHADOW = 'box-shadow:0 2px 6px rgba(0,33,57,.06),0 10px 28px rgba(0,33,57,.08);';
-  var GRADS = [
-    ['spark', 'Spark blue', '#1E7BFF', '#0A5BD3'], ['navy', 'Navy to blue', '#002139', '#0076BC'],
-    ['sky', 'Sky', '#5AB2E3', '#0076BC'], ['steel', 'Steel', '#3F6E90', '#164364'],
-    ['teal', 'Teal', '#14B8A6', '#0E7490'], ['green', 'Green', '#34C77B', '#138A4B'],
-    ['gold', 'Gold', '#F5B83D', '#D98C0B'], ['red', 'Red', '#F05A5A', '#C0262D'],
-    ['purple', 'Purple', '#8B6CF0', '#5B3CC4'], ['custom', 'Custom…', '', '']
+  // Named palette (Hero, Life Unlimited, Legacy). Each color becomes a light-to-full gradient for circles.
+  var PALETTE = [
+    ['Hero', [['hero-dark', 'Hero Dark Blue', '#00194A'], ['hero-bright', 'Hero Bright Blue', '#005EFF'], ['hero-green', 'Hero Accent Green', '#03C252']]],
+    ['Life Unlimited', [['lu-yellow', 'Life Unlimited Yellow', '#FFCB3E'], ['lu-orange', 'Life Unlimited Orange', '#FF8331'],
+                        ['lu-purple', 'Life Unlimited Purple', '#887DFF'], ['lu-grey', 'Life Unlimited Grey', '#D5D5D5']]],
+    ['Legacy', [['lg-spectrum', 'Spectrum Blue', '#003057'], ['lg-blue', 'Charter Blue', '#00629B'], ['lg-teal', 'Charter Teal', '#009E8C'],
+                ['lg-gold', 'Charter Gold', '#FAA91A'], ['lg-burgundy', 'Charter Burgundy', '#96004D'], ['lg-purple', 'Charter Purple', '#500778'],
+                ['lg-grey', 'Charter Grey', '#787878']]]
   ];
+  function tint(h, amt) {   // mix a #rrggbb color with white
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h); if (!m) return h;
+    return '#' + [m[1], m[2], m[3]].map(function (x) { var v = parseInt(x, 16); v = Math.round(v + (255 - v) * amt); return ('0' + v.toString(16)).slice(-2); }).join('').toUpperCase();
+  }
+  // Gradients pair each color with the one to its right on the palette sheet (two rows of seven):
+  //   Hero Dark Blue, Hero Bright Blue, Hero Accent Green, LU Yellow, LU Orange, LU Purple, LU Grey
+  //   Spectrum Blue, Charter Blue, Charter Teal, Charter Gold, Charter Burgundy, Charter Purple, Charter Grey
+  // except that each purple pairs with the blue in the second column, and the two greys pair with each other.
+  var GRADS = [];
+  function pairs(row, group) {
+    for (var i = 0; i < 5; i++) GRADS.push(['g-' + row[i][0], row[i][1] + ' to ' + row[i + 1][1], row[i][2], row[i + 1][2], group]);
+    GRADS.push(['g-' + row[5][0], row[5][1] + ' to ' + row[1][1], row[5][2], row[1][2], group]);
+  }
+  var ROW1 = PALETTE[0][1].concat(PALETTE[1][1]), ROW2 = PALETTE[2][1];
+  pairs(ROW1, 'Hero and Life Unlimited');
+  pairs(ROW2, 'Legacy');
+  GRADS.push(['g-greys', ROW1[6][1] + ' to ' + ROW2[6][1], ROW1[6][2], ROW2[6][2], 'Greys'],
+             ['g-greys-r', ROW2[6][1] + ' to ' + ROW1[6][1], ROW2[6][2], ROW1[6][2], 'Greys'],
+             ['spark', 'Bright blue', '', '', 'Service Enhancements'], ['navy', 'Navy to blue', '', '', 'Service Enhancements'],
+             ['custom', 'Custom…', '', '', 'Custom']);
+  var ALL_COLORS = [];
+  PALETTE.forEach(function (grp) { grp[1].forEach(function (c) { ALL_COLORS.push([c[1], c[2]]); }); });
+  function lum(hx) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hx || ''); if (!m) return 0;
+    return 0.299 * parseInt(m[1], 16) + 0.587 * parseInt(m[2], 16) + 0.114 * parseInt(m[3], 16);
+  }
+  function isLight(hx) { return lum(hx) > 170; }
   var DOT = function (x, y, r) { return '<circle cx="' + x + '" cy="' + y + '" r="' + (r || 1.3) + '" fill="{c}" stroke="none"/>'; };
   var GLYPHS = [
     ['check', 'Check', '<path d="M5 12.5l4.5 4.5L19 7"/>'],
@@ -691,28 +732,42 @@ window.SPComponentKit = function (cfg) {
   }
 
   // ----- form builders -----
-  function gradOptions(sel) { return GRADS.map(function (g) { return '<option value="' + g[0] + '"' + (g[0] === sel ? ' selected' : '') + '>' + g[1] + '</option>'; }).join(''); }
+  function gradOptions(sel) {
+    var out = '', grp = null;
+    GRADS.forEach(function (g) {
+      if (g[4] !== grp) { out += (grp ? '</optgroup>' : '') + '<optgroup label="' + g[4] + '">'; grp = g[4]; }
+      out += '<option value="' + g[0] + '"' + (g[0] === sel ? ' selected' : '') + '>' + g[1] + '</option>';
+    });
+    return out + '</optgroup>';
+  }
   function circleFields(p, d) {
     p = P + p;
     return '' +
       '<div class="field narrow"><label for="' + p + '-kind">Inside the circle</label><select id="' + p + '-kind"><option value="icon">Icon</option><option value="num">Number or text</option><option value="img">Image URL</option></select></div>' +
       '<div class="field narrow" data-show="' + p + '-kind=num"><label for="' + p + '-text">Text</label><input type="text" id="' + p + '-text" maxlength="4" value="1"></div>' +
       '<div class="field grow" data-show="' + p + '-kind=img"><label for="' + p + '-img">Image URL (white PNG or SVG works best)</label><input type="url" id="' + p + '-img" placeholder="https://…/icon.png"></div>' +
-      '<div class="field"><label for="' + p + '-grad">Circle color</label><select id="' + p + '-grad">' + gradOptions(d.grad || 'spark') + '</select></div>' +
+      '<div class="field"><label for="' + p + '-grad">Circle color</label><select id="' + p + '-grad">' + gradOptions(d.grad || 'g-hero-dark') + '</select></div>' +
       '<div class="field narrow" data-show="' + p + '-grad=custom"><span class="lbl">From / to</span><div class="color"><input type="color" id="' + p + '-a" value="#1E7BFF" aria-label="Gradient start"><input type="color" id="' + p + '-b" value="#0A5BD3" aria-label="Gradient end"></div></div>' +
       '<div class="field narrow"><label for="' + p + '-size">Size (px)</label><input type="number" id="' + p + '-size" min="20" max="200" value="' + d.size + '"></div>' +
       '<div class="field narrow"><span class="lbl">Icon color</span><div class="color"><input type="color" id="' + p + '-fg" value="#ffffff" aria-label="Icon color"></div></div>' +
       '<label class="check"><input type="checkbox" id="' + p + '-sh"' + (d.shadow ? ' checked' : '') + '> Shadow</label>' +
       '<div class="he-picker" id="' + p + '-icons" data-show="' + p + '-kind=icon" role="group" aria-label="Icon"></div>';
   }
+  function gradColors(g) {
+    if (g === 'spark') return [C.sparkA, C.spark];
+    if (g === 'navy') return [C.navy, C.blue];
+    for (var i = 0; i < GRADS.length; i++) if (GRADS[i][0] === g) return [GRADS[i][2], GRADS[i][3]];
+    return [C.sparkA, C.spark];
+  }
   function readCircle(p, sizeOverride) {
     p = P + p;
-    var g = $(p + '-grad').value, a, b;
-    GRADS.forEach(function (x) { if (x[0] === g) { a = x[2]; b = x[3]; } });
+    var g = $(p + '-grad').value, ab = gradColors(g), a = ab[0], b = ab[1];
     if (g === 'custom') { a = $(p + '-a').value; b = $(p + '-b').value; }
+    var fg = safeColor($(p + '-fg').value, '#ffffff');
+    if (fg.toLowerCase() === '#ffffff' && (lum(a) + lum(b)) / 2 > 160) fg = C.navy;   // light circles get a navy glyph
     return { kind: $(p + '-kind').value, text: $(p + '-text').value.trim(), img: safeUrl($(p + '-img').value),
-             icon: $(p + '-icons').getAttribute('data-value') || 'check', a: safeColor(a, '#1E7BFF'), b: safeColor(b, '#0A5BD3'),
-             fg: safeColor($(p + '-fg').value, '#ffffff'), size: sizeOverride || clampNum($(p + '-size').value, 20, 200, 54), shadow: $(p + '-sh').checked };
+             icon: $(p + '-icons').getAttribute('data-value') || 'check', a: safeColor(a, C.sparkA), b: safeColor(b, C.spark),
+             fg: fg, size: sizeOverride || clampNum($(p + '-size').value, 20, 200, 54), shadow: $(p + '-sh').checked };
   }
   function form(id, body, okLabel) {
     id = P + id;
@@ -720,12 +775,12 @@ window.SPComponentKit = function (cfg) {
       '<div class="he-cprev" id="' + id + '-prev" aria-label="Preview"></div>' +
       '<button type="button" class="primary" id="' + id + '-ok">' + okLabel + '</button><button type="button" data-close>Cancel</button></div>';
   }
-  var BTN_STYLES = '<option value="grad">Gradient pill (navy to blue)</option><option value="solid">Solid blue pill</option><option value="spark">Spark blue pill</option>' +
+  var BTN_STYLES = '<option value="grad">Gradient pill (navy to blue)</option><option value="solid">Solid blue pill</option><option value="spark">Bright blue pill</option>' +
+    '<option value="color">Solid pill in a palette color</option>' +
     '<option value="outline">Outline pill</option><option value="chip">Chip on dark background</option><option value="tag">Small tag</option>';
-  var BOX_TYPES = '<option value="note">Note (blue left bar)</option><option value="warn">Warning (gold)</option><option value="card">White card</option>' +
-    '<option value="spark">Highlight (light blue)</option><option value="success">Success (green)</option><option value="danger">Important (red)</option>';
-  var ACCENTS = '<option value="#0076BC">Blue</option><option value="#0A5BD3">Spark blue</option><option value="#002139">Navy</option><option value="#0E7490">Teal</option>' +
-    '<option value="#138A4B">Green</option><option value="#E8A317">Gold</option><option value="#C0262D">Red</option>';
+  var BOX_TYPES = '<option value="note">Note (blue left bar)</option><option value="warn">Warning (gold)</option><option value="orange">Heads up (orange)</option><option value="card">White card</option>' +
+    '<option value="spark">Highlight (light blue)</option><option value="success">Success (green)</option><option value="gray">Neutral (gray)</option><option value="color">Left bar in a palette color</option><option value="danger">Important (red)</option>';
+  var ACCENTS = ALL_COLORS.map(function (c) { return '<option value="' + c[1] + '">' + c[0] + '</option>'; }).join('');
 
   forms.innerHTML =
     form('f-icon', circleFields('ci', { size: 54, shadow: true }), 'Insert icon') +
@@ -733,6 +788,7 @@ window.SPComponentKit = function (cfg) {
       '<div class="field grow"><label for="' + P + 'bt-lines">Buttons, one per line: Label | link (leave out the link for a plain chip)</label>' +
         '<textarea id="' + P + 'bt-lines" rows="3">Learn more | https://</textarea></div>' +
       '<div class="field"><label for="' + P + 'bt-style">Style</label><select id="' + P + 'bt-style">' + BTN_STYLES + '</select></div>' +
+      '<div class="field" data-show="' + P + 'bt-style=color"><label for="' + P + 'bt-color">Pill color</label><select id="' + P + 'bt-color">' + ACCENTS + '</select></div>' +
       '<div class="field narrow"><label for="' + P + 'bt-size">Size</label><select id="' + P + 'bt-size"><option value="s">Small</option><option value="m" selected>Medium</option><option value="l">Large</option></select></div>' +
       '<div class="field narrow"><label for="' + P + 'bt-align">Placement</label><select id="' + P + 'bt-align"><option value="flex-start">Left</option><option value="center">Center</option><option value="flex-end">Right</option><option value="inline">Inline in text</option></select></div>' +
       '<label class="check"><input type="checkbox" id="' + P + 'bt-arrow"> Arrow after label</label>' +
@@ -746,10 +802,11 @@ window.SPComponentKit = function (cfg) {
       circleFields('cc', { size: 44, shadow: false }), 'Insert callout') +
     form('f-box',
       '<div class="field"><label for="' + P + 'cb-type">Type</label><select id="' + P + 'cb-type">' + BOX_TYPES + '</select></div>' +
+      '<div class="field" data-show="' + P + 'cb-type=color"><label for="' + P + 'cb-color">Bar color</label><select id="' + P + 'cb-color">' + ACCENTS + '</select></div>' +
       '<div class="field grow"><label for="' + P + 'cb-title">Title (optional)</label><input type="text" id="' + P + 'cb-title" value="Before you add anything"></div>' +
       '<div class="field grow" style="flex-basis:100%"><label for="' + P + 'cb-body">Text</label><textarea id="' + P + 'cb-body" rows="3">Adding or upgrading a service requires account authentication with an account holder or authorized user.</textarea></div>' +
       '<label class="check" style="flex-basis:100%"><input type="checkbox" id="' + P + 'cb-useicon"> Show an icon circle on the left</label>' +
-      '<div class="he-sub" data-show="' + P + 'cb-useicon">' + circleFields('cb', { size: 40, shadow: false, grad: 'gold' }) + '</div>', 'Insert callout box') +
+      '<div class="he-sub" data-show="' + P + 'cb-useicon">' + circleFields('cb', { size: 40, shadow: false, grad: 'g-lu-yellow' }) + '</div>', 'Insert callout box') +
     form('f-stat',
       '<div class="field grow" style="flex-basis:100%"><label for="' + P + 'st-lines">Cards, one per line: Value | small unit | label | link (unit and link optional)</label>' +
         '<textarea id="' + P + 'st-lines" rows="4">$6 | /mo | Enhanced Security\n$12 | /mo | Whole Home WiFi\n$25 | /mo | Invincible WiFi\n40 | pts | Max Spark Points this November</textarea></div>' +
@@ -760,7 +817,14 @@ window.SPComponentKit = function (cfg) {
       '<div class="field grow"><label for="' + P + 'hd-title">Heading</label><input type="text" id="' + P + 'hd-title" value="The Three Core Products"></div>' +
       '<div class="field grow"><label for="' + P + 'hd-sub">Subtitle (optional)</label><input type="text" id="' + P + 'hd-sub" value="What each one does, what it costs, and when to offer it."></div>' +
       '<div class="field narrow"><label for="' + P + 'hd-level">Level</label><select id="' + P + 'hd-level"><option value="h2">Heading 2</option><option value="h3">Heading 3</option></select></div>' +
-      '<div class="field"><label for="' + P + 'hd-grad">Bar color</label><select id="' + P + 'hd-grad">' + gradOptions('navy') + '</select></div>', 'Insert heading');
+      '<div class="field"><label for="' + P + 'hd-grad">Bar color</label><select id="' + P + 'hd-grad">' + gradOptions('g-hero-dark') + '</select></div>', 'Insert heading');
+
+  // color scheme picker on the Insert row
+  var bar = q('comp-bar'), sch = document.createElement('label');
+  sch.className = 'he-scheme';
+  sch.innerHTML = 'Colors <select id="' + P + 'comp-scheme" aria-label="Color scheme for new elements"><option value="brand">Brand</option><option value="se">Service Enhancements</option></select>';
+  bar.appendChild(sch);
+  q('comp-scheme').addEventListener('change', function () { setScheme(this.value); refreshPreviews(); });
 
   // icon pickers
   [].forEach.call(forms.querySelectorAll('.he-picker'), function (pk, i) {
@@ -786,11 +850,13 @@ window.SPComponentKit = function (cfg) {
     var items = q('bt-lines').value.split(/\r?\n/).map(function (l) { var p = l.split('|'); return { t: p[0].trim(), u: safeUrl(p.slice(1).join('|')) }; })
       .filter(function (x) { return x.t; });
     if (!items.length) return '';
+    var pc = safeColor(q('bt-color').value, '#03C252');
     var pad = st === 'tag' ? '4px 11px' : BTN_PAD[sz], fs = st === 'tag' ? 12.5 : BTN_FS[sz];
     var look = {
-      grad: 'color:#ffffff;background-color:' + C.blue + ';background-image:linear-gradient(110deg,' + C.navy + ',' + C.blue + ');border:1px solid transparent;box-shadow:0 4px 12px rgba(0,33,57,.25);',
+      grad: 'color:#ffffff;background-color:' + C.blue + ';background-image:linear-gradient(110deg,' + C.navy + ',' + C.blue + ');border:1px solid transparent;box-shadow:0 4px 12px ' + rgba(C.navy, .25) + ';',
       solid: 'color:#ffffff;background-color:' + C.blue + ';border:1px solid ' + C.blue + ';',
-      spark: 'color:#ffffff;background-color:' + C.spark + ';background-image:linear-gradient(135deg,#1E7BFF,#0A5BD3);border:1px solid transparent;box-shadow:0 4px 12px rgba(10,91,211,.3);',
+      spark: 'color:#ffffff;background-color:' + C.spark + ';background-image:linear-gradient(135deg,' + C.sparkA + ',' + C.spark + ');border:1px solid transparent;box-shadow:0 4px 12px ' + rgba(C.spark, .3) + ';',
+      color: 'color:' + (isLight(pc) || /^#(FF8331|03C252|009E8C|887DFF)$/i.test(pc) ? '#00194A' : '#ffffff') + ';background-color:' + pc + ';border:1px solid ' + pc + ';',
       outline: 'color:' + C.blue + ';background-color:#ffffff;border:2px solid ' + C.blue + ';',
       chip: 'color:#ffffff;background-color:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);',
       tag: 'color:' + C.navy3 + ';background-color:#ffffff;border:1px solid ' + C.sky + ';'
@@ -820,16 +886,22 @@ window.SPComponentKit = function (cfg) {
       (val ? '<div style="margin:4px 0 6px;font-size:38px;line-height:1.1;font-weight:700;letter-spacing:-.02em;color:' + C.navy + '">' + esc(val) + '</div>' : '') +
       (body ? '<div style="margin-top:4px;font-size:14.5px;line-height:1.5">' + lines(body) + '</div>' : '') + '</div>';
   }
-  var BOXES = {
-    note: { box: 'border-left:4px solid ' + C.blue + ';border-radius:0 8px 8px 0;background-color:' + C.mist + ';padding:12px 14px;color:' + C.navy2 + ';', t: C.navy, grad: 'navy' },
-    warn: { box: 'border:1px solid ' + C.line + ';border-left:6px solid #E8A317;border-radius:16px;background-color:#FFF9EC;padding:18px 22px;color:' + C.ink + ';' + SHADOW, t: '#7A4B00', grad: 'gold' },
-    card: { box: 'border:1px solid ' + C.line + ';border-radius:16px;background-color:#ffffff;padding:20px 22px;color:' + C.ink + ';' + SHADOW, t: C.navy, grad: 'navy' },
-    spark: { box: 'border:1px solid #D7E3FB;border-radius:16px;background-color:#F3F7FF;background-image:linear-gradient(180deg,#F3F7FF,#ffffff);padding:18px 22px;color:' + C.navy2 + ';', t: C.navy, grad: 'spark' },
-    success: { box: 'border:1px solid ' + C.line + ';border-left:6px solid #138A4B;border-radius:16px;background-color:#EEF8F1;padding:18px 22px;color:' + C.ink + ';', t: '#0B5D33', grad: 'green' },
-    danger: { box: 'border:1px solid ' + C.line + ';border-left:6px solid #C0262D;border-radius:16px;background-color:#FDEEEE;padding:18px 22px;color:' + C.ink + ';', t: '#8A1C22', grad: 'red' }
-  };
+  function boxes() {
+    var pad = 'border-radius:16px;padding:18px 22px;';
+    return {
+      note: { box: 'border-left:4px solid ' + C.blue + ';border-radius:0 8px 8px 0;background-color:' + C.mist + ';padding:12px 14px;color:' + C.navy2 + ';', t: C.navy },
+      warn: { box: 'border:1px solid ' + C.line + ';border-left:6px solid ' + C.gold + ';' + pad + 'background-color:' + C.goldBg + ';color:' + C.ink + ';' + SHADOW, t: C.goldT },
+      orange: { box: 'border:1px solid ' + C.line + ';border-left:6px solid #FF8331;' + pad + 'background-color:#FFF2E9;color:' + C.ink + ';', t: C.navy },
+      card: { box: 'border:1px solid ' + C.line + ';border-radius:16px;background-color:#ffffff;padding:20px 22px;color:' + C.ink + ';' + SHADOW, t: C.navy },
+      spark: { box: 'border:1px solid ' + C.sparkLine + ';' + pad + 'background-color:' + C.sparkBg + ';background-image:linear-gradient(180deg,' + C.sparkBg + ',#ffffff);color:' + C.navy2 + ';', t: C.navy },
+      success: { box: 'border:1px solid ' + C.line + ';border-left:6px solid ' + C.green + ';' + pad + 'background-color:' + C.greenBg + ';color:' + C.ink + ';', t: C.greenT },
+      gray: { box: 'border:1px solid #D5D5D5;' + pad + 'background-color:#F4F4F4;color:' + C.ink + ';', t: C.navy },
+      color: { box: 'border:1px solid ' + C.line + ';border-left:6px solid ' + safeColor(q('cb-color').value, '#887DFF') + ';' + pad + 'background-color:' + tint(safeColor(q('cb-color').value, '#887DFF'), .9) + ';color:' + C.ink + ';', t: C.navy },
+      danger: { box: 'border:1px solid ' + C.line + ';border-left:6px solid #C0262D;' + pad + 'background-color:#FDEEEE;color:' + C.ink + ';', t: '#8A1C22' }
+    };
+  }
   function calloutBoxHtml() {
-    var bx = BOXES[q('cb-type').value], title = q('cb-title').value.trim(), body = q('cb-body').value.trim();
+    var bx = boxes()[q('cb-type').value], title = q('cb-title').value.trim(), body = q('cb-body').value.trim();
     var text = (title ? '<b style="display:block;margin-bottom:4px;color:' + bx.t + '">' + esc(title) + '</b>' : '') + lines(body);
     var inner = q('cb-useicon').checked
       ? '<div style="display:flex;gap:14px;align-items:flex-start">' + circleHtml(readCircle('cb')) + '<div style="flex:1;min-width:0">' + text + '</div></div>'
@@ -843,9 +915,9 @@ window.SPComponentKit = function (cfg) {
     var cards = rows.map(function (p, i) {
       var hi = spark && rows.length > 1 && i === rows.length - 1, top = hi ? C.spark : acc, u = safeUrl(p[3] || '');
       var st = 'display:block;box-sizing:border-box;flex:1 1 150px;min-width:140px;padding:16px 16px 14px;border-radius:14px;border-top:4px solid ' + top + ';text-align:center;text-decoration:none;color:inherit;' +
-        'background-color:' + (hi ? '#F3F7FF' : '#ffffff') + ';' + (hi ? 'background-image:linear-gradient(180deg,#ffffff,#F3F7FF);' : '') + SHADOW;
+        'background-color:' + (hi ? C.sparkBg : '#ffffff') + ';' + (hi ? 'background-image:linear-gradient(180deg,#ffffff,' + C.sparkBg + ');' : '') + SHADOW;
       var inner = '<b style="display:block;font-size:32px;line-height:1.05;font-weight:700;color:' + C.navy + ';letter-spacing:-.02em">' + esc(p[0]) +
-        (p[1] ? '<small style="font-size:15px;font-weight:600;color:' + (hi ? C.spark : (acc === C.navy ? C.blue : acc)) + ';margin-left:2px">' + esc(p[1]) + '</small>' : '') + '</b>' +
+        (p[1] ? '<small style="font-size:15px;font-weight:600;color:' + (hi ? C.spark : (isLight(acc) || /^#(00194A|003057|002139)$/i.test(acc) ? C.blue : acc)) + ';margin-left:2px">' + esc(p[1]) + '</small>' : '') + '</b>' +
         (p[2] ? '<span style="display:block;margin-top:6px;font-size:13px;line-height:1.3;color:' + C.steel + '">' + esc(p[2]) + '</span>' : '');
       if (!u) return '<div style="' + st + '">' + inner + '</div>';
       var ext = /^https?:/i.test(u) && nt;
@@ -854,9 +926,8 @@ window.SPComponentKit = function (cfg) {
     return '<div data-spc="stat-cards" style="display:flex;flex-wrap:wrap;gap:14px;margin:16px 0;font-family:' + FONT + '">' + cards.join('') + '</div>';
   }
   function headingHtml() {
-    var t = q('hd-title').value.trim(), sub = q('hd-sub').value.trim(), lv = q('hd-level').value === 'h3' ? 'h3' : 'h2', g = q('hd-grad').value, a = C.blue, b = C.navy;
-    GRADS.forEach(function (x) { if (x[0] === g) { a = x[2]; b = x[3]; } });
-    if (g === 'navy') { a = C.blue; b = C.navy; }
+    var t = q('hd-title').value.trim(), sub = q('hd-sub').value.trim(), lv = q('hd-level').value === 'h3' ? 'h3' : 'h2', g = q('hd-grad').value, ab = gradColors(g), a = ab[0], b = ab[1];
+    if (g === 'navy' || g === 'g-hero-dark' || g === 'g-lg-spectrum') { var tmp = a; a = b; b = tmp; }
     if (!t) return '';
     var big = lv === 'h2';
     return '<' + lv + ' data-spc="heading" style="display:flex;align-items:center;gap:12px;margin:' + (big ? '36px' : '26px') + ' 0 ' + (sub ? '6px' : '14px') + ';padding:0;border:0;font-family:' + FONT + ';font-size:' + (big ? 26 : 21) + 'px;line-height:1.2;font-weight:700;color:' + C.navy + '">' +

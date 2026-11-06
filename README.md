@@ -24,6 +24,8 @@ The HTML editor tab, and the body text of the Alert panel tab, have an **Insert*
 - **Stat cards**: one per line as `Value | unit | label | link`.
 - **Section heading**: a heading with the accent bar and an optional subtitle.
 
+**Colors.** The Insert row has a **Colors** switch: **Brand** (default; Hero Dark Blue #00194A, Hero Bright Blue #005EFF and the rest of the palette) or **Service Enhancements** (the original navy and blue page). Circle and heading-bar gradients come from the palette sheet. Each color pairs with the one to its right (Hero Dark Blue, Hero Bright Blue, Hero Accent Green, Life Unlimited Yellow, Orange, Purple, then Spectrum Blue, Charter Blue, Charter Teal, Charter Gold, Charter Burgundy, Charter Purple). Each purple pairs with the blue in the second column, and the two greys pair with each other. Stat cards, solid pills and the "palette color" callout box can use any single palette color. Light circles automatically get a navy icon instead of white.
+
 Every component uses inline styles, so the copied HTML needs no `<style>` block. Paste it into an Embed or Script Editor web part; the modern Text web part strips most styling. Click a component in the editor to move, duplicate or remove it.
 
 ## Version label
