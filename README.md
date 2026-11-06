@@ -15,7 +15,7 @@ Notes:
 
 ## HTML editor components
 
-The HTML editor tab has an **Insert** row for styled blocks in the navy and blue palette:
+The HTML editor tab, and the body text of the Alert panel tab, have an **Insert** row for styled blocks in the navy and blue palette:
 
 - **Icon circle**: a gradient circle holding one of 32 built-in icons, a number or short text, or your own image URL.
 - **Buttons & chips**: one per line as `Label | link`. Styles: gradient, solid, spark blue, outline, chip (for dark backgrounds) and small tag.
@@ -24,4 +24,13 @@ The HTML editor tab has an **Insert** row for styled blocks in the navy and blue
 - **Stat cards**: one per line as `Value | unit | label | link`.
 - **Section heading**: a heading with the accent bar and an optional subtitle.
 
+**Colors.** The Insert row has a **Colors** switch: **Brand** (default; Hero Dark Blue #00194A, Hero Bright Blue #005EFF and the rest of the palette) or **Service Enhancements** (the original navy and blue page). Circle and heading-bar gradients come from the palette sheet. Each color pairs with the one to its right (Hero Dark Blue, Hero Bright Blue, Hero Accent Green, Life Unlimited Yellow, Orange, Purple, then Spectrum Blue, Charter Blue, Charter Teal, Charter Gold, Charter Burgundy, Charter Purple). Each purple pairs with the blue in the second column, and the two greys pair with each other. Stat cards, solid pills and the "palette color" callout box can use any single palette color. Light circles automatically get a navy icon instead of white.
+
 Every component uses inline styles, so the copied HTML needs no `<style>` block. Paste it into an Embed or Script Editor web part; the modern Text web part strips most styling. Click a component in the editor to move, duplicate or remove it.
+
+## Version label
+
+The header shows the version (for example `v1.6.0 · Nov 6, 2026 · build 12 · 5d4206f`).
+
+- The **version number** (`v1.6.0`) is set by hand in `public/index.html`. Raise it when you ship a change: the middle number for a new feature, the last number for a fix.
+- The **date, build number and commit** are filled in automatically by the deploy workflow, so they always match what is live. A copy opened straight from disk shows "local copy" instead.

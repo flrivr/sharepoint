@@ -127,6 +127,8 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .he-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .he-comp-bar > strong { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-right: 2px; }
 .he-cform textarea { font: inherit; }
+.he-scheme { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-left: auto; }
+.he-scheme select { width: auto; }
 .he-cform .he-sub { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; flex-basis: 100%; }
 .he-cform .he-sub[hidden] { display: none; }
 .he-picker { flex-basis: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 4px; }
@@ -134,6 +136,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .he-picker button[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 1px; background: #eaf2ff; }
 .he-cprev { flex-basis: 100%; min-height: 60px; padding: 16px; background: #fff; color: #323130; border: 1px dashed var(--line); border-radius: 6px; overflow: auto; }
 .he-cprev.dark { background: linear-gradient(115deg, #002139, #09314E 48%, #0076BC); }
+header h1 .ver { display: inline-block; margin-left: 8px; padding: 2px 9px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); color: var(--muted); font-family: var(--font-code); font-size: 12px; font-weight: 400; vertical-align: middle; white-space: nowrap; }
 .he-area [data-spc] { outline: 1px dashed transparent; }
 .he-area [data-spc]:hover { outline-color: rgba(11,99,214,.35); }
 </style>
@@ -142,7 +145,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 <body>
 <div class="wrap">
   <header>
-    <h1>Alert Panel Builder</h1>
+    <h1>Alert Panel Builder <span class="ver" id="app-version" title="Version, deploy date, build number and commit">v1.6.0<span id="app-build"> &middot; __BUILD_INFO__</span></span></h1>
     <p>Tools for the Bridgeton Strong site: a gradient alert panel for a content web part, the header message script, and a message bar above the site header. Sample text is a placeholder to replace.</p>
   </header>
 
@@ -258,6 +261,27 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
             <button type="button" id="link-add">Add link</button>
             <button type="button" id="link-remove">Remove link</button>
           </div>
+          <div class="toolbar he-comp-bar" role="toolbar" aria-label="Insert components into the body text" id="ap-comp-bar">
+            <span class="lbl">Insert</span>
+            <button type="button" data-form="f-icon">Icon circle</button>
+            <button type="button" data-form="f-btn">Buttons &amp; chips</button>
+            <button type="button" data-form="f-circ">Callout circle</button>
+            <button type="button" data-form="f-box">Callout box</button>
+            <button type="button" data-form="f-stat">Stat cards</button>
+            <button type="button" data-form="f-head">Section heading</button>
+          </div>
+          <div id="ap-comp-forms"></div>
+          <div class="he-tools" id="ap-comp-tools" role="group" aria-label="Component tools" hidden>
+            <div class="he-tools-row">
+              <strong id="ap-comp-name">Component</strong>
+              <button type="button" data-comp="up">Move up</button>
+              <button type="button" data-comp="down">Move down</button>
+              <button type="button" data-comp="dup">Duplicate</button>
+              <button type="button" data-comp="after">Add paragraph after</button>
+              <button type="button" data-comp="del">Remove</button>
+            </div>
+            <p class="note">Edit the text right in the editor. To change colors or the icon, insert a new one and remove this one.</p>
+          </div>
           <div id="editor" class="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="body-lbl" spellcheck="true"></div>
           <p class="note" id="editor-note">Select text, then use the toolbar. Press Enter for a new line.</p>
         </div>
@@ -288,7 +312,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
         <textarea class="code" id="out" readonly spellcheck="false" aria-label="Generated HTML"></textarea>
         <div class="status" id="status" role="status" aria-live="polite"></div>
         <ol class="steps">
-          <li>On your SharePoint page, add a Text or Embed web part, or edit an existing content web part.</li>
+          <li>On your SharePoint page, add a Text or Embed web part, or edit an existing content web part. If the body uses Insert elements (icon circles, buttons, callouts, stat cards), use an Embed or Script Editor web part: the Text web part strips their styling.</li>
           <li>Switch it to Source (the &lt;/&gt; button), select everything, and paste.</li>
           <li>Save the web part, then republish the page.</li>
         </ol>
@@ -474,12 +498,12 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
       </div>
       <div class="toolbar he-comp-bar" role="toolbar" aria-label="Insert components" id="he-comp-bar">
         <strong>Insert</strong>
-        <button type="button" data-form="he-f-icon">Icon circle</button>
-        <button type="button" data-form="he-f-btn">Buttons &amp; chips</button>
-        <button type="button" data-form="he-f-circ">Callout circle</button>
-        <button type="button" data-form="he-f-box">Callout box</button>
-        <button type="button" data-form="he-f-stat">Stat cards</button>
-        <button type="button" data-form="he-f-head">Section heading</button>
+        <button type="button" data-form="f-icon">Icon circle</button>
+        <button type="button" data-form="f-btn">Buttons &amp; chips</button>
+        <button type="button" data-form="f-circ">Callout circle</button>
+        <button type="button" data-form="f-box">Callout box</button>
+        <button type="button" data-form="f-stat">Stat cards</button>
+        <button type="button" data-form="f-head">Section heading</button>
       </div>
       <div id="he-comp-forms"></div>
       <div class="he-tools" id="he-comp-tools" role="group" aria-label="Component tools" hidden>
@@ -577,6 +601,470 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   </div>
 </div>
 
+<script>
+// Shared component kit: icon circles, buttons and chips, callout circles and boxes, stat cards, headings.
+// Used by the HTML editor (prefix "he-") and the alert panel body text (prefix "ap-").
+// Everything is written with inline styles so the pasted HTML needs no <style> block.
+window.SPComponentKit = function (cfg) {
+  var P = cfg.prefix, area = cfg.area, saved = null;
+  var $ = function (id) { return document.getElementById(id); };
+  var q = function (id) { return document.getElementById(P + id); };
+  var forms = q('comp-forms');
+  function say(m) { if (cfg.say) cfg.say(m); }
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function changed() { area.dispatchEvent(new Event('input', { bubbles: true })); }
+  function keepSel() {
+    var s = getSelection();
+    if (s.rangeCount && area.contains(s.anchorNode)) { saved = s.getRangeAt(0).cloneRange(); trackComp(s.anchorNode); }
+  }
+  ['keyup', 'mouseup', 'input'].forEach(function (n) { area.addEventListener(n, keepSel); });
+  function closeForms() { [].forEach.call(forms.querySelectorAll('.he-form'), function (f) { f.classList.remove('open'); }); }
+  function closeAll() { closeForms(); if (cfg.closeOther) cfg.closeOther(); }
+
+  var FONT = "'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif";
+  // Two color schemes: the Bridgeton brand colors (default) and the Service Enhancements page colors.
+  var SCHEMES = {
+    brand: { navy: '#00194A', navy2: '#00194A', navy3: '#00194A', blue: '#005EFF', blueLt: '#6FA0FF', steel: '#4A5A7A',
+             sky: '#D5D5D5', mist: '#EEF3FF', ink: '#323130', line: '#D5D5D5', spark: '#005EFF', sparkA: '#3D85FF', sparkLt: '#D6E4FF',
+             sparkBg: '#F2F6FF', sparkLine: '#C9D9FF', green: '#03C252', greenBg: '#EAFAF1', greenT: '#00194A', gold: '#FFCB3E', goldBg: '#FFF8E0', goldT: '#00194A' },
+    se:    { navy: '#002139', navy2: '#09314E', navy3: '#164364', blue: '#0076BC', blueLt: '#5AB2E3', steel: '#3F6E90',
+             sky: '#CBDCE7', mist: '#EEF4F8', ink: '#323130', line: '#E3E8EC', spark: '#0A5BD3', sparkA: '#1E7BFF', sparkLt: '#C9DBFF',
+             sparkBg: '#F3F7FF', sparkLine: '#D7E3FB', green: '#138A4B', greenBg: '#EEF8F1', greenT: '#0B5D33', gold: '#E8A317', goldBg: '#FFF9EC', goldT: '#7A4B00' }
+  };
+  var C = {};
+  function setScheme(k) { var s = SCHEMES[k] || SCHEMES.brand; Object.keys(s).forEach(function (x) { C[x] = s[x]; }); }
+  setScheme('brand');
+  var SHADOW = 'box-shadow:0 2px 6px rgba(0,33,57,.06),0 10px 28px rgba(0,33,57,.08);';
+  // Named palette (Hero, Life Unlimited, Legacy). Each color becomes a light-to-full gradient for circles.
+  var PALETTE = [
+    ['Hero', [['hero-dark', 'Hero Dark Blue', '#00194A'], ['hero-bright', 'Hero Bright Blue', '#005EFF'], ['hero-green', 'Hero Accent Green', '#03C252']]],
+    ['Life Unlimited', [['lu-yellow', 'Life Unlimited Yellow', '#FFCB3E'], ['lu-orange', 'Life Unlimited Orange', '#FF8331'],
+                        ['lu-purple', 'Life Unlimited Purple', '#887DFF'], ['lu-grey', 'Life Unlimited Grey', '#D5D5D5']]],
+    ['Legacy', [['lg-spectrum', 'Spectrum Blue', '#003057'], ['lg-blue', 'Charter Blue', '#00629B'], ['lg-teal', 'Charter Teal', '#009E8C'],
+                ['lg-gold', 'Charter Gold', '#FAA91A'], ['lg-burgundy', 'Charter Burgundy', '#96004D'], ['lg-purple', 'Charter Purple', '#500778'],
+                ['lg-grey', 'Charter Grey', '#787878']]]
+  ];
+  function tint(h, amt) {   // mix a #rrggbb color with white
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h); if (!m) return h;
+    return '#' + [m[1], m[2], m[3]].map(function (x) { var v = parseInt(x, 16); v = Math.round(v + (255 - v) * amt); return ('0' + v.toString(16)).slice(-2); }).join('').toUpperCase();
+  }
+  // Gradients pair each color with the one to its right on the palette sheet (two rows of seven):
+  //   Hero Dark Blue, Hero Bright Blue, Hero Accent Green, LU Yellow, LU Orange, LU Purple, LU Grey
+  //   Spectrum Blue, Charter Blue, Charter Teal, Charter Gold, Charter Burgundy, Charter Purple, Charter Grey
+  // except that each purple pairs with the blue in the second column, and the two greys pair with each other.
+  var GRADS = [];
+  function pairs(row, group) {
+    for (var i = 0; i < 5; i++) GRADS.push(['g-' + row[i][0], row[i][1] + ' to ' + row[i + 1][1], row[i][2], row[i + 1][2], group]);
+    GRADS.push(['g-' + row[5][0], row[5][1] + ' to ' + row[1][1], row[5][2], row[1][2], group]);
+  }
+  var ROW1 = PALETTE[0][1].concat(PALETTE[1][1]), ROW2 = PALETTE[2][1];
+  pairs(ROW1, 'Hero and Life Unlimited');
+  pairs(ROW2, 'Legacy');
+  GRADS.push(['g-greys', ROW1[6][1] + ' to ' + ROW2[6][1], ROW1[6][2], ROW2[6][2], 'Greys'],
+             ['g-greys-r', ROW2[6][1] + ' to ' + ROW1[6][1], ROW2[6][2], ROW1[6][2], 'Greys'],
+             ['spark', 'Bright blue', '', '', 'Service Enhancements'], ['navy', 'Navy to blue', '', '', 'Service Enhancements'],
+             ['custom', 'Custom…', '', '', 'Custom']);
+  var ALL_COLORS = [];
+  PALETTE.forEach(function (grp) { grp[1].forEach(function (c) { ALL_COLORS.push([c[1], c[2]]); }); });
+  function lum(hx) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hx || ''); if (!m) return 0;
+    return 0.299 * parseInt(m[1], 16) + 0.587 * parseInt(m[2], 16) + 0.114 * parseInt(m[3], 16);
+  }
+  function isLight(hx) { return lum(hx) > 170; }
+  var DOT = function (x, y, r) { return '<circle cx="' + x + '" cy="' + y + '" r="' + (r || 1.3) + '" fill="{c}" stroke="none"/>'; };
+  var GLYPHS = [
+    ['check', 'Check', '<path d="M5 12.5l4.5 4.5L19 7"/>'],
+    ['shield', 'Shield', '<path d="M12 3l7.5 3v6c0 4.6-3.1 7.6-7.5 9-4.4-1.4-7.5-4.4-7.5-9V6z"/><path d="M8.8 12.2l2.2 2.2 4.3-4.6"/>'],
+    ['wifi', 'WiFi', '<path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.7 16a5 5 0 0 1 6.6 0"/>' + DOT(12, 19.3, 1.5)],
+    ['info', 'Info', '<circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/>' + DOT(12, 7.6)],
+    ['warning', 'Warning', '<path d="M12 3.5L22 20.5H2z"/><path d="M12 10v4.8"/>' + DOT(12, 17.6)],
+    ['question', 'Question', '<circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.4a2.8 2.8 0 1 1 4 2.6c-.9.5-1.3 1-1.3 2"/>' + DOT(12, 17.2)],
+    ['doc', 'Document', '<path d="M6 2.5h8l4.5 4.5v14.5H6z"/><path d="M14 2.5V7h4.5M9 12h6M9 15.5h6M9 19h3.5"/>'],
+    ['flag', 'Flag', '<path d="M5 21.5V3"/><path d="M5 4h13l-3 4.5 3 4.5H5"/>'],
+    ['star', 'Star', '<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6L12 16.8l-5.4 2.8 1.1-6-4.5-4.2 6.1-.8z"/>'],
+    ['sparkle', 'Sparkle', '<path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6zM18 13.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/>'],
+    ['target', 'Target', '<circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="5.5"/>' + DOT(12, 12, 1.8)],
+    ['trophy', 'Trophy', '<path d="M7.5 3.5h9V9a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 5.5h-3c0 3 1.6 4.6 3.4 4.8M16.5 5.5h3c0 3-1.6 4.6-3.4 4.8M12 13.5v3.5M8 21h8M9.5 17h5v4h-5z"/>'],
+    ['bolt', 'Lightning', '<path d="M13.5 2.5L4.5 13.5H11l-1 8 9-11.5h-6.5z"/>'],
+    ['bulb', 'Idea', '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1V16h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/>'],
+    ['phone', 'Phone', '<path d="M5 3.5h3.6l1.9 4.7-2.4 1.5a11 11 0 0 0 6.2 6.2l1.5-2.4 4.7 1.9V19a2 2 0 0 1-2 2A16.5 16.5 0 0 1 3 5.5a2 2 0 0 1 2-2z"/>'],
+    ['mail', 'Email', '<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/>'],
+    ['calendar', 'Calendar', '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'],
+    ['clock', 'Clock', '<circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3.5 2"/>'],
+    ['people', 'People', '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.2c2.6.2 4.5 2.3 4.5 5.3"/>'],
+    ['person', 'Person', '<circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.4-7 7.5-7s7.5 2.8 7.5 7"/>'],
+    ['home', 'Home', '<path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5v11h12v-11M10 20.5v-6h4v6"/>'],
+    ['lock', 'Lock', '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>'],
+    ['gift', 'Gift', '<rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8.5h14V12M12 8v12.5M12 8S10.5 3.5 8 4.2c-2 .6-1 3.8 4 3.8zM12 8s1.5-4.5 4-3.8c2 .6 1 3.8-4 3.8z"/>'],
+    ['dollar', 'Money', '<path d="M12 2.5v19M16.5 6.5H10a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6H7"/>'],
+    ['chart', 'Chart', '<path d="M4 20.5h16M7 17v-5M12 17V7M17 17v-8"/>'],
+    ['link', 'Link', '<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/>'],
+    ['megaphone', 'Announcement', '<path d="M3.5 10v4h3l8 4.5v-13l-8 4.5zM6.5 14l1.5 6"/><path d="M18 9a4 4 0 0 1 0 6"/>'],
+    ['bell', 'Bell', '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>'],
+    ['heart', 'Heart', '<path d="M12 20s-8-4.8-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.2 12 20 12 20z"/>'],
+    ['tools', 'Tools', '<path d="M14.5 6.5a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.5-7.5"/><path d="M14.5 6.5l-2-2 2-2 2 2"/>'],
+    ['pin', 'Location', '<path d="M12 21.5s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9.5" r="2.6"/>'],
+    ['arrow', 'Arrow', '<path d="M5 12h14M13 6l6 6-6 6"/>']
+  ];
+  function glyph(name) { for (var i = 0; i < GLYPHS.length; i++) if (GLYPHS[i][0] === name) return GLYPHS[i]; return GLYPHS[0]; }
+  function svg(name, color, size) {
+    return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;width:' + size + 'px;height:' + size + 'px">' +
+      glyph(name)[2].replace(/\{c\}/g, color) + '</svg>';
+  }
+  function rgba(h, a) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h || ''); if (!m) return 'rgba(0,33,57,' + a + ')';
+    return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
+  }
+  function safeColor(v, d) { return /^#[0-9a-f]{6}$/i.test(v || '') ? v : d; }
+  function safeUrl(u) { u = (u || '').trim(); return /^(https?:\/\/|\/|mailto:|tel:|#)/i.test(u) ? u : ''; }
+  function lines(t) { return esc(t || '').replace(/\r?\n/g, '<br>'); }
+  function clampNum(v, lo, hi, d) { var n = parseFloat(v); return isNaN(n) ? d : Math.round(Math.min(hi, Math.max(lo, n))); }
+
+  function circleHtml(o) {
+    var s = o.size, inner, small = (o.text || '').length > 2;
+    if (o.kind === 'img' && o.img) inner = '<img src="' + esc(o.img) + '" alt="" style="display:block;width:' + Math.round(s * .58) + 'px;height:' + Math.round(s * .58) + 'px;object-fit:contain">';
+    else if (o.kind === 'num') inner = esc(o.text || '1');
+    else inner = svg(o.icon, o.fg, Math.round(s * .54));
+    return '<span data-spc="icon" style="display:inline-flex;align-items:center;justify-content:center;flex:none;box-sizing:border-box;width:' + s + 'px;height:' + s + 'px;min-width:' + s + 'px;border-radius:50%;' +
+      'background-color:' + o.b + ';background-image:linear-gradient(135deg,' + o.a + ',' + o.b + ');color:' + o.fg + ';font-family:' + FONT + ';font-weight:700;font-style:normal;' +
+      'font-size:' + Math.round(s * (small ? .3 : .44)) + 'px;line-height:1;vertical-align:middle;text-align:center;' +
+      (o.shadow ? 'box-shadow:0 6px 16px ' + rgba(o.b, .35) + ';' : '') + '">' + inner + '</span>';
+  }
+
+  // ----- form builders -----
+  function gradOptions(sel) {
+    var out = '', grp = null;
+    GRADS.forEach(function (g) {
+      if (g[4] !== grp) { out += (grp ? '</optgroup>' : '') + '<optgroup label="' + g[4] + '">'; grp = g[4]; }
+      out += '<option value="' + g[0] + '"' + (g[0] === sel ? ' selected' : '') + '>' + g[1] + '</option>';
+    });
+    return out + '</optgroup>';
+  }
+  function circleFields(p, d) {
+    p = P + p;
+    return '' +
+      '<div class="field narrow"><label for="' + p + '-kind">Inside the circle</label><select id="' + p + '-kind"><option value="icon">Icon</option><option value="num">Number or text</option><option value="img">Image URL</option></select></div>' +
+      '<div class="field narrow" data-show="' + p + '-kind=num"><label for="' + p + '-text">Text</label><input type="text" id="' + p + '-text" maxlength="4" value="1"></div>' +
+      '<div class="field grow" data-show="' + p + '-kind=img"><label for="' + p + '-img">Image URL (white PNG or SVG works best)</label><input type="url" id="' + p + '-img" placeholder="https://…/icon.png"></div>' +
+      '<div class="field"><label for="' + p + '-grad">Circle color</label><select id="' + p + '-grad">' + gradOptions(d.grad || 'g-hero-dark') + '</select></div>' +
+      '<div class="field narrow" data-show="' + p + '-grad=custom"><span class="lbl">From / to</span><div class="color"><input type="color" id="' + p + '-a" value="#1E7BFF" aria-label="Gradient start"><input type="color" id="' + p + '-b" value="#0A5BD3" aria-label="Gradient end"></div></div>' +
+      '<div class="field narrow"><label for="' + p + '-size">Size (px)</label><input type="number" id="' + p + '-size" min="20" max="200" value="' + d.size + '"></div>' +
+      '<div class="field narrow"><span class="lbl">Icon color</span><div class="color"><input type="color" id="' + p + '-fg" value="#ffffff" aria-label="Icon color"></div></div>' +
+      '<label class="check"><input type="checkbox" id="' + p + '-sh"' + (d.shadow ? ' checked' : '') + '> Shadow</label>' +
+      '<div class="he-picker" id="' + p + '-icons" data-show="' + p + '-kind=icon" role="group" aria-label="Icon"></div>';
+  }
+  function gradColors(g) {
+    if (g === 'spark') return [C.sparkA, C.spark];
+    if (g === 'navy') return [C.navy, C.blue];
+    for (var i = 0; i < GRADS.length; i++) if (GRADS[i][0] === g) return [GRADS[i][2], GRADS[i][3]];
+    return [C.sparkA, C.spark];
+  }
+  function readCircle(p, sizeOverride) {
+    p = P + p;
+    var g = $(p + '-grad').value, ab = gradColors(g), a = ab[0], b = ab[1];
+    if (g === 'custom') { a = $(p + '-a').value; b = $(p + '-b').value; }
+    var fg = safeColor($(p + '-fg').value, '#ffffff');
+    if (fg.toLowerCase() === '#ffffff' && (lum(a) + lum(b)) / 2 > 160) fg = C.navy;   // light circles get a navy glyph
+    return { kind: $(p + '-kind').value, text: $(p + '-text').value.trim(), img: safeUrl($(p + '-img').value),
+             icon: $(p + '-icons').getAttribute('data-value') || 'check', a: safeColor(a, C.sparkA), b: safeColor(b, C.spark),
+             fg: fg, size: sizeOverride || clampNum($(p + '-size').value, 20, 200, 54), shadow: $(p + '-sh').checked };
+  }
+  function form(id, body, okLabel) {
+    id = P + id;
+    return '<div class="he-form he-cform" id="' + id + '">' + body +
+      '<div class="he-cprev" id="' + id + '-prev" aria-label="Preview"></div>' +
+      '<button type="button" class="primary" id="' + id + '-ok">' + okLabel + '</button><button type="button" data-close>Cancel</button></div>';
+  }
+  var BTN_STYLES = '<option value="grad">Gradient pill (navy to blue)</option><option value="solid">Solid blue pill</option><option value="spark">Bright blue pill</option>' +
+    '<option value="color">Solid pill in a palette color</option>' +
+    '<option value="outline">Outline pill</option><option value="chip">Chip on dark background</option><option value="tag">Small tag</option>';
+  var BOX_TYPES = '<option value="note">Note (blue left bar)</option><option value="warn">Warning (gold)</option><option value="orange">Heads up (orange)</option><option value="card">White card</option>' +
+    '<option value="spark">Highlight (light blue)</option><option value="success">Success (green)</option><option value="gray">Neutral (gray)</option><option value="color">Left bar in a palette color</option><option value="danger">Important (red)</option>';
+  var ACCENTS = ALL_COLORS.map(function (c) { return '<option value="' + c[1] + '">' + c[0] + '</option>'; }).join('');
+
+  forms.innerHTML =
+    form('f-icon', circleFields('ci', { size: 54, shadow: true }), 'Insert icon') +
+    form('f-btn',
+      '<div class="field grow"><label for="' + P + 'bt-lines">Buttons, one per line: Label | link (leave out the link for a plain chip)</label>' +
+        '<textarea id="' + P + 'bt-lines" rows="3">Learn more | https://</textarea></div>' +
+      '<div class="field"><label for="' + P + 'bt-style">Style</label><select id="' + P + 'bt-style">' + BTN_STYLES + '</select></div>' +
+      '<div class="field" data-show="' + P + 'bt-style=color"><label for="' + P + 'bt-color">Pill color</label><select id="' + P + 'bt-color">' + ACCENTS + '</select></div>' +
+      '<div class="field narrow"><label for="' + P + 'bt-size">Size</label><select id="' + P + 'bt-size"><option value="s">Small</option><option value="m" selected>Medium</option><option value="l">Large</option></select></div>' +
+      '<div class="field narrow"><label for="' + P + 'bt-align">Placement</label><select id="' + P + 'bt-align"><option value="flex-start">Left</option><option value="center">Center</option><option value="flex-end">Right</option><option value="inline">Inline in text</option></select></div>' +
+      '<label class="check"><input type="checkbox" id="' + P + 'bt-arrow"> Arrow after label</label>' +
+      '<label class="check"><input type="checkbox" id="' + P + 'bt-new" checked> Open links in a new tab</label>', 'Insert') +
+    form('f-circ',
+      '<div class="field"><label for="' + P + 'cc-layout">Layout</label><select id="' + P + 'cc-layout"><option value="row">Circle beside text</option><option value="card">Award card (centered, tinted)</option><option value="center">Centered, no card</option></select></div>' +
+      '<div class="field grow"><label for="' + P + 'cc-title">Title</label><input type="text" id="' + P + 'cc-title" value="Resources"></div>' +
+      '<div class="field" data-show="' + P + 'cc-layout=card"><label for="' + P + 'cc-value">Big value (optional)</label><input type="text" id="' + P + 'cc-value" placeholder="+10 pts"></div>' +
+      '<div class="field grow" style="flex-basis:100%"><label for="' + P + 'cc-body">Text</label><textarea id="' + P + 'cc-body" rows="2">Short description goes here.</textarea></div>' +
+      '<div class="field narrow" data-show="' + P + 'cc-layout=card"><span class="lbl">Card color</span><div class="color"><input type="color" id="' + P + 'cc-bg" value="#C9DBFF" aria-label="Card color"></div></div>' +
+      circleFields('cc', { size: 44, shadow: false }), 'Insert callout') +
+    form('f-box',
+      '<div class="field"><label for="' + P + 'cb-type">Type</label><select id="' + P + 'cb-type">' + BOX_TYPES + '</select></div>' +
+      '<div class="field" data-show="' + P + 'cb-type=color"><label for="' + P + 'cb-color">Bar color</label><select id="' + P + 'cb-color">' + ACCENTS + '</select></div>' +
+      '<div class="field grow"><label for="' + P + 'cb-title">Title (optional)</label><input type="text" id="' + P + 'cb-title" value="Before you add anything"></div>' +
+      '<div class="field grow" style="flex-basis:100%"><label for="' + P + 'cb-body">Text</label><textarea id="' + P + 'cb-body" rows="3">Adding or upgrading a service requires account authentication with an account holder or authorized user.</textarea></div>' +
+      '<label class="check" style="flex-basis:100%"><input type="checkbox" id="' + P + 'cb-useicon"> Show an icon circle on the left</label>' +
+      '<div class="he-sub" data-show="' + P + 'cb-useicon">' + circleFields('cb', { size: 40, shadow: false, grad: 'g-lu-yellow' }) + '</div>', 'Insert callout box') +
+    form('f-stat',
+      '<div class="field grow" style="flex-basis:100%"><label for="' + P + 'st-lines">Cards, one per line: Value | small unit | label | link (unit and link optional)</label>' +
+        '<textarea id="' + P + 'st-lines" rows="4">$6 | /mo | Enhanced Security\n$12 | /mo | Whole Home WiFi\n$25 | /mo | Invincible WiFi\n40 | pts | Max Spark Points this November</textarea></div>' +
+      '<div class="field"><label for="' + P + 'st-accent">Top bar color</label><select id="' + P + 'st-accent">' + ACCENTS + '</select></div>' +
+      '<label class="check"><input type="checkbox" id="' + P + 'st-lastspark" checked> Highlight the last card in spark blue</label>' +
+      '<label class="check"><input type="checkbox" id="' + P + 'st-new" checked> Open links in a new tab</label>', 'Insert stat cards') +
+    form('f-head',
+      '<div class="field grow"><label for="' + P + 'hd-title">Heading</label><input type="text" id="' + P + 'hd-title" value="The Three Core Products"></div>' +
+      '<div class="field grow"><label for="' + P + 'hd-sub">Subtitle (optional)</label><input type="text" id="' + P + 'hd-sub" value="What each one does, what it costs, and when to offer it."></div>' +
+      '<div class="field narrow"><label for="' + P + 'hd-level">Level</label><select id="' + P + 'hd-level"><option value="h2">Heading 2</option><option value="h3">Heading 3</option></select></div>' +
+      '<div class="field"><label for="' + P + 'hd-grad">Bar color</label><select id="' + P + 'hd-grad">' + gradOptions('g-hero-dark') + '</select></div>', 'Insert heading');
+
+  // color scheme picker on the Insert row
+  var bar = q('comp-bar'), sch = document.createElement('label');
+  sch.className = 'he-scheme';
+  sch.innerHTML = 'Colors <select id="' + P + 'comp-scheme" aria-label="Color scheme for new elements"><option value="brand">Brand</option><option value="se">Service Enhancements</option></select>';
+  bar.appendChild(sch);
+  q('comp-scheme').addEventListener('change', function () { setScheme(this.value); refreshPreviews(); });
+
+  // icon pickers
+  [].forEach.call(forms.querySelectorAll('.he-picker'), function (pk, i) {
+    var first = pk.id === P + 'cb-icons' ? 'warning' : pk.id === P + 'cc-icons' ? 'doc' : 'shield';
+    pk.setAttribute('data-value', first);
+    pk.innerHTML = GLYPHS.map(function (g) {
+      return '<button type="button" data-icon="' + g[0] + '" title="' + g[1] + '" aria-label="' + g[1] + '" aria-pressed="' + (g[0] === first) + '">' + svg(g[0], '#14213a', 20) + '</button>';
+    }).join('');
+    pk.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      pk.setAttribute('data-value', b.getAttribute('data-icon'));
+      [].forEach.call(pk.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      refreshPreviews();
+    });
+  });
+  // custom gradient for the heading bar is not offered: drop that option
+  var hdc = q('hd-grad').querySelector('option[value="custom"]'); if (hdc) hdc.remove();
+
+  // ----- generators -----
+  var BTN_PAD = { s: '6px 14px', m: '9px 20px', l: '12px 28px' }, BTN_FS = { s: 13, m: 15, l: 17 };
+  function buttonsHtml() {
+    var st = q('bt-style').value, sz = q('bt-size').value, align = q('bt-align').value, nt = q('bt-new').checked, arrow = q('bt-arrow').checked;
+    var items = q('bt-lines').value.split(/\r?\n/).map(function (l) { var p = l.split('|'); return { t: p[0].trim(), u: safeUrl(p.slice(1).join('|')) }; })
+      .filter(function (x) { return x.t; });
+    if (!items.length) return '';
+    var pc = safeColor(q('bt-color').value, '#03C252');
+    var pad = st === 'tag' ? '4px 11px' : BTN_PAD[sz], fs = st === 'tag' ? 12.5 : BTN_FS[sz];
+    var look = {
+      grad: 'color:#ffffff;background-color:' + C.blue + ';background-image:linear-gradient(110deg,' + C.navy + ',' + C.blue + ');border:1px solid transparent;box-shadow:0 4px 12px ' + rgba(C.navy, .25) + ';',
+      solid: 'color:#ffffff;background-color:' + C.blue + ';border:1px solid ' + C.blue + ';',
+      spark: 'color:#ffffff;background-color:' + C.spark + ';background-image:linear-gradient(135deg,' + C.sparkA + ',' + C.spark + ');border:1px solid transparent;box-shadow:0 4px 12px ' + rgba(C.spark, .3) + ';',
+      color: 'color:' + (isLight(pc) || /^#(FF8331|03C252|009E8C|887DFF)$/i.test(pc) ? '#00194A' : '#ffffff') + ';background-color:' + pc + ';border:1px solid ' + pc + ';',
+      outline: 'color:' + C.blue + ';background-color:#ffffff;border:2px solid ' + C.blue + ';',
+      chip: 'color:#ffffff;background-color:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);',
+      tag: 'color:' + C.navy3 + ';background-color:#ffffff;border:1px solid ' + C.sky + ';'
+    }[st];
+    var base = 'display:inline-block;box-sizing:border-box;padding:' + pad + ';border-radius:99px;font-family:' + FONT + ';font-size:' + fs + 'px;font-weight:600;line-height:1.3;text-decoration:none;white-space:nowrap;' + look;
+    var out = items.map(function (x) {
+      var label = esc(x.t) + (arrow ? ' &rarr;' : '');
+      if (!x.u) return '<span style="' + base + '">' + label + '</span>';
+      var ext = /^https?:/i.test(x.u) && nt;
+      return '<a href="' + esc(x.u) + '"' + (ext ? ' target="_blank" rel="noopener"' : '') + ' data-interception="off" style="' + base + 'cursor:pointer">' + label + '</a>';
+    });
+    if (align === 'inline') return out.join(' ');
+    return '<div data-spc="buttons" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:' + align + ';margin:14px 0;font-family:' + FONT + '">' + out.join('') + '</div>';
+  }
+  function calloutCircleHtml() {
+    var layout = q('cc-layout').value, title = q('cc-title').value.trim(), body = q('cc-body').value.trim(), val = q('cc-value').value.trim();
+    var o = readCircle('cc');
+    if (layout === 'row') {
+      return '<div data-spc="callout-circle" style="display:flex;align-items:center;gap:14px;margin:10px 0;font-family:' + FONT + ';font-size:15px;line-height:1.5;color:' + C.ink + '">' +
+        circleHtml(o) + '<div style="flex:1;min-width:0">' + (title ? '<b style="color:' + C.navy + '">' + esc(title) + '</b>' + (body ? ' &mdash; ' : '') : '') + lines(body) + '</div></div>';
+    }
+    var card = layout === 'card', bg = safeColor(q('cc-bg').value, C.sparkLt);
+    return '<div data-spc="callout-circle" style="box-sizing:border-box;max-width:340px;margin:12px auto;padding:20px 20px 18px;text-align:center;font-family:' + FONT + ';color:' + C.navy2 + ';' +
+      (card ? 'background-color:' + bg + ';border-radius:18px;' : '') + '">' +
+      '<div style="display:flex;justify-content:center;margin:0 0 10px">' + circleHtml(o) + '</div>' +
+      (title ? '<div style="font-size:13px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:' + C.navy + '">' + esc(title) + '</div>' : '') +
+      (val ? '<div style="margin:4px 0 6px;font-size:38px;line-height:1.1;font-weight:700;letter-spacing:-.02em;color:' + C.navy + '">' + esc(val) + '</div>' : '') +
+      (body ? '<div style="margin-top:4px;font-size:14.5px;line-height:1.5">' + lines(body) + '</div>' : '') + '</div>';
+  }
+  function boxes() {
+    var pad = 'border-radius:16px;padding:18px 22px;';
+    return {
+      note: { box: 'border-left:4px solid ' + C.blue + ';border-radius:0 8px 8px 0;background-color:' + C.mist + ';padding:12px 14px;color:' + C.navy2 + ';', t: C.navy },
+      warn: { box: 'border:1px solid ' + C.line + ';border-left:6px solid ' + C.gold + ';' + pad + 'background-color:' + C.goldBg + ';color:' + C.ink + ';' + SHADOW, t: C.goldT },
+      orange: { box: 'border:1px solid ' + C.line + ';border-left:6px solid #FF8331;' + pad + 'background-color:#FFF2E9;color:' + C.ink + ';', t: C.navy },
+      card: { box: 'border:1px solid ' + C.line + ';border-radius:16px;background-color:#ffffff;padding:20px 22px;color:' + C.ink + ';' + SHADOW, t: C.navy },
+      spark: { box: 'border:1px solid ' + C.sparkLine + ';' + pad + 'background-color:' + C.sparkBg + ';background-image:linear-gradient(180deg,' + C.sparkBg + ',#ffffff);color:' + C.navy2 + ';', t: C.navy },
+      success: { box: 'border:1px solid ' + C.line + ';border-left:6px solid ' + C.green + ';' + pad + 'background-color:' + C.greenBg + ';color:' + C.ink + ';', t: C.greenT },
+      gray: { box: 'border:1px solid #D5D5D5;' + pad + 'background-color:#F4F4F4;color:' + C.ink + ';', t: C.navy },
+      color: { box: 'border:1px solid ' + C.line + ';border-left:6px solid ' + safeColor(q('cb-color').value, '#887DFF') + ';' + pad + 'background-color:' + tint(safeColor(q('cb-color').value, '#887DFF'), .9) + ';color:' + C.ink + ';', t: C.navy },
+      danger: { box: 'border:1px solid ' + C.line + ';border-left:6px solid #C0262D;' + pad + 'background-color:#FDEEEE;color:' + C.ink + ';', t: '#8A1C22' }
+    };
+  }
+  function calloutBoxHtml() {
+    var bx = boxes()[q('cb-type').value], title = q('cb-title').value.trim(), body = q('cb-body').value.trim();
+    var text = (title ? '<b style="display:block;margin-bottom:4px;color:' + bx.t + '">' + esc(title) + '</b>' : '') + lines(body);
+    var inner = q('cb-useicon').checked
+      ? '<div style="display:flex;gap:14px;align-items:flex-start">' + circleHtml(readCircle('cb')) + '<div style="flex:1;min-width:0">' + text + '</div></div>'
+      : text;
+    return '<div data-spc="callout-box" style="box-sizing:border-box;margin:14px 0;font-family:' + FONT + ';font-size:15.5px;line-height:1.55;' + bx.box + '">' + inner + '</div>';
+  }
+  function statsHtml() {
+    var acc = safeColor(q('st-accent').value, C.blue), spark = q('st-lastspark').checked, nt = q('st-new').checked;
+    var rows = q('st-lines').value.split(/\r?\n/).map(function (l) { return l.split('|').map(function (s) { return s.trim(); }); }).filter(function (p) { return p[0]; });
+    if (!rows.length) return '';
+    var cards = rows.map(function (p, i) {
+      var hi = spark && rows.length > 1 && i === rows.length - 1, top = hi ? C.spark : acc, u = safeUrl(p[3] || '');
+      var st = 'display:block;box-sizing:border-box;flex:1 1 150px;min-width:140px;padding:16px 16px 14px;border-radius:14px;border-top:4px solid ' + top + ';text-align:center;text-decoration:none;color:inherit;' +
+        'background-color:' + (hi ? C.sparkBg : '#ffffff') + ';' + (hi ? 'background-image:linear-gradient(180deg,#ffffff,' + C.sparkBg + ');' : '') + SHADOW;
+      var inner = '<b style="display:block;font-size:32px;line-height:1.05;font-weight:700;color:' + C.navy + ';letter-spacing:-.02em">' + esc(p[0]) +
+        (p[1] ? '<small style="font-size:15px;font-weight:600;color:' + (hi ? C.spark : (isLight(acc) || /^#(00194A|003057|002139)$/i.test(acc) ? C.blue : acc)) + ';margin-left:2px">' + esc(p[1]) + '</small>' : '') + '</b>' +
+        (p[2] ? '<span style="display:block;margin-top:6px;font-size:13px;line-height:1.3;color:' + C.steel + '">' + esc(p[2]) + '</span>' : '');
+      if (!u) return '<div style="' + st + '">' + inner + '</div>';
+      var ext = /^https?:/i.test(u) && nt;
+      return '<a href="' + esc(u) + '"' + (ext ? ' target="_blank" rel="noopener"' : '') + ' data-interception="off" style="' + st + '">' + inner + '</a>';
+    });
+    return '<div data-spc="stat-cards" style="display:flex;flex-wrap:wrap;gap:14px;margin:16px 0;font-family:' + FONT + '">' + cards.join('') + '</div>';
+  }
+  function headingHtml() {
+    var t = q('hd-title').value.trim(), sub = q('hd-sub').value.trim(), lv = q('hd-level').value === 'h3' ? 'h3' : 'h2', g = q('hd-grad').value, ab = gradColors(g), a = ab[0], b = ab[1];
+    if (g === 'navy' || g === 'g-hero-dark' || g === 'g-lg-spectrum') { var tmp = a; a = b; b = tmp; }
+    if (!t) return '';
+    var big = lv === 'h2';
+    return '<' + lv + ' data-spc="heading" style="display:flex;align-items:center;gap:12px;margin:' + (big ? '36px' : '26px') + ' 0 ' + (sub ? '6px' : '14px') + ';padding:0;border:0;font-family:' + FONT + ';font-size:' + (big ? 26 : 21) + 'px;line-height:1.2;font-weight:700;color:' + C.navy + '">' +
+      '<span style="flex:none;display:inline-block;width:' + (big ? 7 : 6) + 'px;height:' + (big ? 30 : 24) + 'px;border-radius:99px;background-color:' + a + ';background-image:linear-gradient(180deg,' + a + ',' + b + ')"></span>' + esc(t) + '</' + lv + '>' +
+      (sub ? '<p style="margin:0 0 18px ' + (big ? 19 : 18) + 'px;font-family:' + FONT + ';font-size:15.5px;color:' + C.steel + '">' + esc(sub) + '</p>' : '');
+  }
+  var GEN = {
+    'f-icon': function () { return circleHtml(readCircle('ci')); },
+    'f-btn': buttonsHtml, 'f-circ': calloutCircleHtml, 'f-box': calloutBoxHtml, 'f-stat': statsHtml, 'f-head': headingHtml
+  };
+  var BLOCK = { 'f-icon': false, 'f-btn': true, 'f-circ': true, 'f-box': true, 'f-stat': true, 'f-head': true };
+
+  // show/hide fields that depend on another control (data-show="id=value" or data-show="checkboxId")
+  function applyShows() {
+    [].forEach.call(forms.querySelectorAll('[data-show]'), function (n) {
+      var m = n.getAttribute('data-show').split('='), c = $(m[0]);
+      n.hidden = m.length > 1 ? c.value !== m[1] : !c.checked;
+    });
+  }
+  function refreshPreviews() {
+    applyShows();
+    Object.keys(GEN).forEach(function (id) {
+      var f = q(id); if (!f.classList.contains('open')) return;
+      var pv = q(id + '-prev'), html = GEN[id]();
+      pv.innerHTML = html || '<span class="note">Nothing to insert yet.</span>';
+      pv.classList.toggle('dark', id === 'f-btn' && q('bt-style').value === 'chip');
+      [].forEach.call(pv.querySelectorAll('a'), function (a) { a.addEventListener('click', function (e) { e.preventDefault(); }); });
+    });
+  }
+  forms.addEventListener('input', refreshPreviews);
+  forms.addEventListener('change', refreshPreviews);
+
+  q('comp-bar').addEventListener('mousedown', function (e) { if (e.target.closest('button')) e.preventDefault(); });
+  q('comp-bar').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b || !b.dataset.form) return;
+    keepSel();
+    var f = q(b.dataset.form), wasOpen = f.classList.contains('open');
+    closeAll();
+    if (!wasOpen) { f.classList.add('open'); refreshPreviews(); var first = f.querySelector('input,select,textarea'); if (first) first.focus(); }
+  });
+  [].forEach.call(forms.querySelectorAll('[data-close]'), function (b) { b.addEventListener('click', closeForms); });
+
+  function lockIcons(root) {
+    [].forEach.call((root || area).querySelectorAll('[data-spc="icon"]'), function (n) { n.setAttribute('contenteditable', 'false'); });
+  }
+  function placeCaret(node, offset) {
+    var r = document.createRange(); r.setStart(node, offset); r.collapse(true);
+    var s = getSelection(); s.removeAllRanges(); s.addRange(r); saved = r.cloneRange();
+  }
+  function isEmptyBlock(n) {
+    return n && n.nodeType === 1 && /^(P|DIV|H[1-6])$/.test(n.tagName) && !n.hasAttribute('data-spc') &&
+      !n.textContent.replace(/\u00a0/g, ' ').trim() && !n.querySelector('img,table,svg,[data-spc]');
+  }
+  // DOM insertion rather than execCommand('insertHTML'): the browser command splits and restyles nested blocks
+  function insertComponent(id) {
+    var html = GEN[id]();
+    if (!html) { say('Fill in the form first.'); return; }
+    var block = cfg.blocked && cfg.blocked(); if (block) { say(block); return; }
+    var tpl = document.createElement('template'); tpl.innerHTML = html;
+    var frag = tpl.content, r = saved && area.contains(saved.startContainer) ? saved : null;
+    area.focus();
+    if (!BLOCK[id] && r) {
+      var gap = document.createTextNode('\u00a0');
+      frag.appendChild(gap);
+      r.deleteContents(); r.insertNode(frag);
+      placeCaret(gap, 1);
+    } else {
+      var tail = document.createElement('p'); tail.innerHTML = '<br>'; frag.appendChild(tail);
+      if (!r) area.appendChild(frag);
+      else {
+        var n = r.startContainer, cell = (n.nodeType === 1 ? n : n.parentNode).closest('td,th'), box = cell && area.contains(cell) ? cell : area;
+        if (n === box) {
+          var before = box.childNodes[r.startOffset - 1];
+          box.insertBefore(frag, before ? before.nextSibling : box.firstChild);
+        } else {
+          while (n.parentNode && n.parentNode !== box) n = n.parentNode;
+          if (isEmptyBlock(n)) box.replaceChild(frag, n);
+          else box.insertBefore(frag, n.nextSibling);   // after the paragraph (or loose text) holding the caret
+        }
+      }
+      placeCaret(tail, 0);
+    }
+    lockIcons();
+    closeForms();
+    changed();
+    say('Inserted. Click it to move, duplicate or remove it.');
+  }
+  Object.keys(GEN).forEach(function (id) { q(id + '-ok').addEventListener('click', function () { insertComponent(id); }); });
+
+  // ----- tools for the component the caret is in -----
+  var curComp = null, COMP_NAMES = { icon: 'Icon circle', buttons: 'Buttons', 'callout-circle': 'Callout circle', 'callout-box': 'Callout box', 'stat-cards': 'Stat cards', heading: 'Section heading' };
+  function trackComp(node) {
+    var n = node && (node.nodeType === 1 ? node : node.parentNode), top = null;
+    while (n && n !== area) { if (n.nodeType === 1 && n.hasAttribute('data-spc')) top = n; n = n.parentNode; }
+    if (n !== area) top = null;
+    curComp = top;
+    q('comp-tools').hidden = !top;
+    if (top) q('comp-name').textContent = COMP_NAMES[top.getAttribute('data-spc')] || 'Component';
+  }
+  area.addEventListener('click', function (e) { var c = e.target.closest && e.target.closest('[data-spc]'); if (c && area.contains(c)) trackComp(c); });
+  q('comp-tools').addEventListener('mousedown', function (e) { if (e.target.closest('button')) e.preventDefault(); });
+  q('comp-tools').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-comp]'); if (!b || !curComp || !area.contains(curComp)) return;
+    var c = curComp, act = b.getAttribute('data-comp'), p = c.parentNode;
+    // a subtitle paragraph travels with its heading
+    var sub = c.getAttribute('data-spc') === 'heading' && c.nextElementSibling && c.nextElementSibling.tagName === 'P' && /margin:0 0 18px/.test(c.nextElementSibling.getAttribute('style') || '') ? c.nextElementSibling : null;
+    var last = sub || c;
+    if (act === 'del') { if (sub) sub.remove(); c.remove(); curComp = null; q('comp-tools').hidden = true; say('Removed.'); changed(); return; }
+    if (act === 'dup') { var cl = c.cloneNode(true); p.insertBefore(cl, last.nextSibling); if (sub) p.insertBefore(sub.cloneNode(true), cl.nextSibling); say('Duplicated.'); changed(); return; }
+    if (act === 'after') {
+      var np = document.createElement('p'); np.innerHTML = '<br>'; p.insertBefore(np, last.nextSibling);
+      var r = document.createRange(); r.setStart(np, 0); r.collapse(true); var s = getSelection(); s.removeAllRanges(); s.addRange(r); area.focus(); keepSel(); changed(); return;
+    }
+    function skip(n, dir) { while (n && n.nodeType !== 1) n = dir < 0 ? n.previousSibling : n.nextSibling; return n; }
+    if (act === 'up') {
+      var prev = skip(c.previousSibling, -1), ph = prev && skip(prev.previousSibling, -1);
+      // step over a heading and its subtitle together
+      if (prev && ph && ph.getAttribute('data-spc') === 'heading' && prev.tagName === 'P' && /margin:0 0 18px/.test(prev.getAttribute('style') || '')) prev = ph;
+      if (prev) { p.insertBefore(c, prev); if (sub) p.insertBefore(sub, prev); } else say('Already at the top.'); }
+    if (act === 'down') {
+      var nx = skip(last.nextSibling, 1), nsub = nx && nx.getAttribute('data-spc') === 'heading' && skip(nx.nextSibling, 1);
+      if (nx) { p.insertBefore(nx, c); if (nsub && nsub.tagName === 'P' && /margin:0 0 18px/.test(nsub.getAttribute('style') || '')) p.insertBefore(nsub, c); }
+      else say('Already at the bottom.');
+    }
+    changed();
+  });
+
+
+  return { lockIcons: lockIcons };
+};
+</script>
+<script>
+(function () {   // the deploy workflow fills in the build info; a local copy shows just the version
+  var b = document.getElementById('app-build');
+  if (b && b.textContent.indexOf('__BUILD_') !== -1) b.textContent = ' \u00b7 local copy';
+})();
+</script>
 <script>
 (function () {
   var BASE = 'https://chartercom.sharepoint.com/sites/BridgetonStrong/SiteAssets/icons/Alert%20Panel%20Icons/';
@@ -738,6 +1226,12 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     function ser(n, ctx) {
       if (n.nodeType === 3) return esc(n.nodeValue).replace(/ /g, '&nbsp;');
       if (n.nodeType !== 1) return '';
+      if (n.hasAttribute('data-spc')) {   // inserted component: already clean, inline-styled HTML
+        var cp = n.cloneNode(true);
+        cp.removeAttribute('contenteditable');
+        [].forEach.call(cp.querySelectorAll('[contenteditable]'), function (x) { x.removeAttribute('contenteditable'); });
+        return cp.outerHTML;
+      }
       var t = n.nodeName.toLowerCase(), st = n.style || {}, c;
       switch (t) {
         case 'br': return '<br>';
@@ -919,6 +1413,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     });
     ed.addEventListener('input', render);
     ed.addEventListener('blur', function () {});
+    SPComponentKit({ prefix: 'ap-', area: ed, say: say });
   })();
   (function buildGrid() {
     var g = $('icon-grid');
@@ -1451,7 +1946,7 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
   }
   function keepSel() {
     var s = getSelection();
-    if (s.rangeCount && area.contains(s.anchorNode)) { saved = s.getRangeAt(0).cloneRange(); trackCell(s.anchorNode); trackComp(s.anchorNode); }
+    if (s.rangeCount && area.contains(s.anchorNode)) { saved = s.getRangeAt(0).cloneRange(); trackCell(s.anchorNode); }
   }
   function restoreSel() {
     area.focus();
@@ -1982,367 +2477,10 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
     say('All rows set to at least ' + n + 'px.');
   });
 
-  // ---------- components: icon circles, buttons and chips, callout circles and boxes, stat cards, headings ----------
-  // Everything is written with inline styles so the pasted HTML needs no <style> block.
-  var FONT = "'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif";
-  var C = { navy: '#002139', navy2: '#09314E', navy3: '#164364', blue: '#0076BC', blueLt: '#5AB2E3', steel: '#3F6E90',
-            sky: '#CBDCE7', mist: '#EEF4F8', ink: '#323130', line: '#E3E8EC', spark: '#0A5BD3', sparkLt: '#C9DBFF' };
-  var SHADOW = 'box-shadow:0 2px 6px rgba(0,33,57,.06),0 10px 28px rgba(0,33,57,.08);';
-  var GRADS = [
-    ['spark', 'Spark blue', '#1E7BFF', '#0A5BD3'], ['navy', 'Navy to blue', '#002139', '#0076BC'],
-    ['sky', 'Sky', '#5AB2E3', '#0076BC'], ['steel', 'Steel', '#3F6E90', '#164364'],
-    ['teal', 'Teal', '#14B8A6', '#0E7490'], ['green', 'Green', '#34C77B', '#138A4B'],
-    ['gold', 'Gold', '#F5B83D', '#D98C0B'], ['red', 'Red', '#F05A5A', '#C0262D'],
-    ['purple', 'Purple', '#8B6CF0', '#5B3CC4'], ['custom', 'Custom…', '', '']
-  ];
-  var DOT = function (x, y, r) { return '<circle cx="' + x + '" cy="' + y + '" r="' + (r || 1.3) + '" fill="{c}" stroke="none"/>'; };
-  var GLYPHS = [
-    ['check', 'Check', '<path d="M5 12.5l4.5 4.5L19 7"/>'],
-    ['shield', 'Shield', '<path d="M12 3l7.5 3v6c0 4.6-3.1 7.6-7.5 9-4.4-1.4-7.5-4.4-7.5-9V6z"/><path d="M8.8 12.2l2.2 2.2 4.3-4.6"/>'],
-    ['wifi', 'WiFi', '<path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.7 16a5 5 0 0 1 6.6 0"/>' + DOT(12, 19.3, 1.5)],
-    ['info', 'Info', '<circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/>' + DOT(12, 7.6)],
-    ['warning', 'Warning', '<path d="M12 3.5L22 20.5H2z"/><path d="M12 10v4.8"/>' + DOT(12, 17.6)],
-    ['question', 'Question', '<circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.4a2.8 2.8 0 1 1 4 2.6c-.9.5-1.3 1-1.3 2"/>' + DOT(12, 17.2)],
-    ['doc', 'Document', '<path d="M6 2.5h8l4.5 4.5v14.5H6z"/><path d="M14 2.5V7h4.5M9 12h6M9 15.5h6M9 19h3.5"/>'],
-    ['flag', 'Flag', '<path d="M5 21.5V3"/><path d="M5 4h13l-3 4.5 3 4.5H5"/>'],
-    ['star', 'Star', '<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6L12 16.8l-5.4 2.8 1.1-6-4.5-4.2 6.1-.8z"/>'],
-    ['sparkle', 'Sparkle', '<path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6zM18 13.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/>'],
-    ['target', 'Target', '<circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="5.5"/>' + DOT(12, 12, 1.8)],
-    ['trophy', 'Trophy', '<path d="M7.5 3.5h9V9a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 5.5h-3c0 3 1.6 4.6 3.4 4.8M16.5 5.5h3c0 3-1.6 4.6-3.4 4.8M12 13.5v3.5M8 21h8M9.5 17h5v4h-5z"/>'],
-    ['bolt', 'Lightning', '<path d="M13.5 2.5L4.5 13.5H11l-1 8 9-11.5h-6.5z"/>'],
-    ['bulb', 'Idea', '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1V16h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/>'],
-    ['phone', 'Phone', '<path d="M5 3.5h3.6l1.9 4.7-2.4 1.5a11 11 0 0 0 6.2 6.2l1.5-2.4 4.7 1.9V19a2 2 0 0 1-2 2A16.5 16.5 0 0 1 3 5.5a2 2 0 0 1 2-2z"/>'],
-    ['mail', 'Email', '<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/>'],
-    ['calendar', 'Calendar', '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'],
-    ['clock', 'Clock', '<circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3.5 2"/>'],
-    ['people', 'People', '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.2c2.6.2 4.5 2.3 4.5 5.3"/>'],
-    ['person', 'Person', '<circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.4-7 7.5-7s7.5 2.8 7.5 7"/>'],
-    ['home', 'Home', '<path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5v11h12v-11M10 20.5v-6h4v6"/>'],
-    ['lock', 'Lock', '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>'],
-    ['gift', 'Gift', '<rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8.5h14V12M12 8v12.5M12 8S10.5 3.5 8 4.2c-2 .6-1 3.8 4 3.8zM12 8s1.5-4.5 4-3.8c2 .6 1 3.8-4 3.8z"/>'],
-    ['dollar', 'Money', '<path d="M12 2.5v19M16.5 6.5H10a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6H7"/>'],
-    ['chart', 'Chart', '<path d="M4 20.5h16M7 17v-5M12 17V7M17 17v-8"/>'],
-    ['link', 'Link', '<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/>'],
-    ['megaphone', 'Announcement', '<path d="M3.5 10v4h3l8 4.5v-13l-8 4.5zM6.5 14l1.5 6"/><path d="M18 9a4 4 0 0 1 0 6"/>'],
-    ['bell', 'Bell', '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>'],
-    ['heart', 'Heart', '<path d="M12 20s-8-4.8-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.2 12 20 12 20z"/>'],
-    ['tools', 'Tools', '<path d="M14.5 6.5a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.5-7.5"/><path d="M14.5 6.5l-2-2 2-2 2 2"/>'],
-    ['pin', 'Location', '<path d="M12 21.5s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9.5" r="2.6"/>'],
-    ['arrow', 'Arrow', '<path d="M5 12h14M13 6l6 6-6 6"/>']
-  ];
-  function glyph(name) { for (var i = 0; i < GLYPHS.length; i++) if (GLYPHS[i][0] === name) return GLYPHS[i]; return GLYPHS[0]; }
-  function svg(name, color, size) {
-    return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;width:' + size + 'px;height:' + size + 'px">' +
-      glyph(name)[2].replace(/\{c\}/g, color) + '</svg>';
-  }
-  function rgba(h, a) {
-    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h || ''); if (!m) return 'rgba(0,33,57,' + a + ')';
-    return 'rgba(' + parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16) + ',' + a + ')';
-  }
-  function safeColor(v, d) { return /^#[0-9a-f]{6}$/i.test(v || '') ? v : d; }
-  function safeUrl(u) { u = (u || '').trim(); return /^(https?:\/\/|\/|mailto:|tel:|#)/i.test(u) ? u : ''; }
-  function lines(t) { return esc(t || '').replace(/\r?\n/g, '<br>'); }
-  function clampNum(v, lo, hi, d) { var n = parseFloat(v); return isNaN(n) ? d : Math.round(Math.min(hi, Math.max(lo, n))); }
-
-  function circleHtml(o) {
-    var s = o.size, inner, small = (o.text || '').length > 2;
-    if (o.kind === 'img' && o.img) inner = '<img src="' + esc(o.img) + '" alt="" style="display:block;width:' + Math.round(s * .58) + 'px;height:' + Math.round(s * .58) + 'px;object-fit:contain">';
-    else if (o.kind === 'num') inner = esc(o.text || '1');
-    else inner = svg(o.icon, o.fg, Math.round(s * .54));
-    return '<span data-spc="icon" style="display:inline-flex;align-items:center;justify-content:center;flex:none;box-sizing:border-box;width:' + s + 'px;height:' + s + 'px;min-width:' + s + 'px;border-radius:50%;' +
-      'background-color:' + o.b + ';background-image:linear-gradient(135deg,' + o.a + ',' + o.b + ');color:' + o.fg + ';font-family:' + FONT + ';font-weight:700;font-style:normal;' +
-      'font-size:' + Math.round(s * (small ? .3 : .44)) + 'px;line-height:1;vertical-align:middle;text-align:center;' +
-      (o.shadow ? 'box-shadow:0 6px 16px ' + rgba(o.b, .35) + ';' : '') + '">' + inner + '</span>';
-  }
-
-  // ----- form builders -----
-  function gradOptions(sel) { return GRADS.map(function (g) { return '<option value="' + g[0] + '"' + (g[0] === sel ? ' selected' : '') + '>' + g[1] + '</option>'; }).join(''); }
-  function circleFields(p, d) {
-    return '' +
-      '<div class="field narrow"><label for="' + p + '-kind">Inside the circle</label><select id="' + p + '-kind"><option value="icon">Icon</option><option value="num">Number or text</option><option value="img">Image URL</option></select></div>' +
-      '<div class="field narrow" data-show="' + p + '-kind=num"><label for="' + p + '-text">Text</label><input type="text" id="' + p + '-text" maxlength="4" value="1"></div>' +
-      '<div class="field grow" data-show="' + p + '-kind=img"><label for="' + p + '-img">Image URL (white PNG or SVG works best)</label><input type="url" id="' + p + '-img" placeholder="https://…/icon.png"></div>' +
-      '<div class="field"><label for="' + p + '-grad">Circle color</label><select id="' + p + '-grad">' + gradOptions(d.grad || 'spark') + '</select></div>' +
-      '<div class="field narrow" data-show="' + p + '-grad=custom"><span class="lbl">From / to</span><div class="color"><input type="color" id="' + p + '-a" value="#1E7BFF" aria-label="Gradient start"><input type="color" id="' + p + '-b" value="#0A5BD3" aria-label="Gradient end"></div></div>' +
-      '<div class="field narrow"><label for="' + p + '-size">Size (px)</label><input type="number" id="' + p + '-size" min="20" max="200" value="' + d.size + '"></div>' +
-      '<div class="field narrow"><span class="lbl">Icon color</span><div class="color"><input type="color" id="' + p + '-fg" value="#ffffff" aria-label="Icon color"></div></div>' +
-      '<label class="check"><input type="checkbox" id="' + p + '-sh"' + (d.shadow ? ' checked' : '') + '> Shadow</label>' +
-      '<div class="he-picker" id="' + p + '-icons" data-show="' + p + '-kind=icon" role="group" aria-label="Icon"></div>';
-  }
-  function readCircle(p, sizeOverride) {
-    var g = $(p + '-grad').value, a, b;
-    GRADS.forEach(function (x) { if (x[0] === g) { a = x[2]; b = x[3]; } });
-    if (g === 'custom') { a = $(p + '-a').value; b = $(p + '-b').value; }
-    return { kind: $(p + '-kind').value, text: $(p + '-text').value.trim(), img: safeUrl($(p + '-img').value),
-             icon: $(p + '-icons').getAttribute('data-value') || 'check', a: safeColor(a, '#1E7BFF'), b: safeColor(b, '#0A5BD3'),
-             fg: safeColor($(p + '-fg').value, '#ffffff'), size: sizeOverride || clampNum($(p + '-size').value, 20, 200, 54), shadow: $(p + '-sh').checked };
-  }
-  function form(id, body, okLabel) {
-    return '<div class="he-form he-cform" id="' + id + '">' + body +
-      '<div class="he-cprev" id="' + id + '-prev" aria-label="Preview"></div>' +
-      '<button type="button" class="primary" id="' + id + '-ok">' + okLabel + '</button><button type="button" data-close>Cancel</button></div>';
-  }
-  var BTN_STYLES = '<option value="grad">Gradient pill (navy to blue)</option><option value="solid">Solid blue pill</option><option value="spark">Spark blue pill</option>' +
-    '<option value="outline">Outline pill</option><option value="chip">Chip on dark background</option><option value="tag">Small tag</option>';
-  var BOX_TYPES = '<option value="note">Note (blue left bar)</option><option value="warn">Warning (gold)</option><option value="card">White card</option>' +
-    '<option value="spark">Highlight (light blue)</option><option value="success">Success (green)</option><option value="danger">Important (red)</option>';
-  var ACCENTS = '<option value="#0076BC">Blue</option><option value="#0A5BD3">Spark blue</option><option value="#002139">Navy</option><option value="#0E7490">Teal</option>' +
-    '<option value="#138A4B">Green</option><option value="#E8A317">Gold</option><option value="#C0262D">Red</option>';
-
-  $('he-comp-forms').innerHTML =
-    form('he-f-icon', circleFields('ci', { size: 54, shadow: true }), 'Insert icon') +
-    form('he-f-btn',
-      '<div class="field grow"><label for="bt-lines">Buttons, one per line: Label | link (leave out the link for a plain chip)</label>' +
-        '<textarea id="bt-lines" rows="3">Learn more | https://</textarea></div>' +
-      '<div class="field"><label for="bt-style">Style</label><select id="bt-style">' + BTN_STYLES + '</select></div>' +
-      '<div class="field narrow"><label for="bt-size">Size</label><select id="bt-size"><option value="s">Small</option><option value="m" selected>Medium</option><option value="l">Large</option></select></div>' +
-      '<div class="field narrow"><label for="bt-align">Placement</label><select id="bt-align"><option value="flex-start">Left</option><option value="center">Center</option><option value="flex-end">Right</option><option value="inline">Inline in text</option></select></div>' +
-      '<label class="check"><input type="checkbox" id="bt-arrow"> Arrow after label</label>' +
-      '<label class="check"><input type="checkbox" id="bt-new" checked> Open links in a new tab</label>', 'Insert') +
-    form('he-f-circ',
-      '<div class="field"><label for="cc-layout">Layout</label><select id="cc-layout"><option value="row">Circle beside text</option><option value="card">Award card (centered, tinted)</option><option value="center">Centered, no card</option></select></div>' +
-      '<div class="field grow"><label for="cc-title">Title</label><input type="text" id="cc-title" value="Resources"></div>' +
-      '<div class="field" data-show="cc-layout=card"><label for="cc-value">Big value (optional)</label><input type="text" id="cc-value" placeholder="+10 pts"></div>' +
-      '<div class="field grow" style="flex-basis:100%"><label for="cc-body">Text</label><textarea id="cc-body" rows="2">Short description goes here.</textarea></div>' +
-      '<div class="field narrow" data-show="cc-layout=card"><span class="lbl">Card color</span><div class="color"><input type="color" id="cc-bg" value="#C9DBFF" aria-label="Card color"></div></div>' +
-      circleFields('cc', { size: 44, shadow: false }), 'Insert callout') +
-    form('he-f-box',
-      '<div class="field"><label for="cb-type">Type</label><select id="cb-type">' + BOX_TYPES + '</select></div>' +
-      '<div class="field grow"><label for="cb-title">Title (optional)</label><input type="text" id="cb-title" value="Before you add anything"></div>' +
-      '<div class="field grow" style="flex-basis:100%"><label for="cb-body">Text</label><textarea id="cb-body" rows="3">Adding or upgrading a service requires account authentication with an account holder or authorized user.</textarea></div>' +
-      '<label class="check" style="flex-basis:100%"><input type="checkbox" id="cb-useicon"> Show an icon circle on the left</label>' +
-      '<div class="he-sub" data-show="cb-useicon">' + circleFields('cb', { size: 40, shadow: false, grad: 'gold' }) + '</div>', 'Insert callout box') +
-    form('he-f-stat',
-      '<div class="field grow" style="flex-basis:100%"><label for="st-lines">Cards, one per line: Value | small unit | label | link (unit and link optional)</label>' +
-        '<textarea id="st-lines" rows="4">$6 | /mo | Enhanced Security\n$12 | /mo | Whole Home WiFi\n$25 | /mo | Invincible WiFi\n40 | pts | Max Spark Points this November</textarea></div>' +
-      '<div class="field"><label for="st-accent">Top bar color</label><select id="st-accent">' + ACCENTS + '</select></div>' +
-      '<label class="check"><input type="checkbox" id="st-lastspark" checked> Highlight the last card in spark blue</label>' +
-      '<label class="check"><input type="checkbox" id="st-new" checked> Open links in a new tab</label>', 'Insert stat cards') +
-    form('he-f-head',
-      '<div class="field grow"><label for="hd-title">Heading</label><input type="text" id="hd-title" value="The Three Core Products"></div>' +
-      '<div class="field grow"><label for="hd-sub">Subtitle (optional)</label><input type="text" id="hd-sub" value="What each one does, what it costs, and when to offer it."></div>' +
-      '<div class="field narrow"><label for="hd-level">Level</label><select id="hd-level"><option value="h2">Heading 2</option><option value="h3">Heading 3</option></select></div>' +
-      '<div class="field"><label for="hd-grad">Bar color</label><select id="hd-grad">' + gradOptions('navy') + '</select></div>', 'Insert heading');
-
-  // icon pickers
-  [].forEach.call(document.querySelectorAll('#he-comp-forms .he-picker'), function (pk, i) {
-    var first = pk.id === 'cb-icons' ? 'warning' : pk.id === 'cc-icons' ? 'doc' : 'shield';
-    pk.setAttribute('data-value', first);
-    pk.innerHTML = GLYPHS.map(function (g) {
-      return '<button type="button" data-icon="' + g[0] + '" title="' + g[1] + '" aria-label="' + g[1] + '" aria-pressed="' + (g[0] === first) + '">' + svg(g[0], '#14213a', 20) + '</button>';
-    }).join('');
-    pk.addEventListener('click', function (e) {
-      var b = e.target.closest('button'); if (!b) return;
-      pk.setAttribute('data-value', b.getAttribute('data-icon'));
-      [].forEach.call(pk.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-      refreshPreviews();
-    });
-  });
-  // custom gradient for the heading bar is not offered: drop that option
-  var hdc = $('hd-grad').querySelector('option[value="custom"]'); if (hdc) hdc.remove();
-
-  // ----- generators -----
-  var BTN_PAD = { s: '6px 14px', m: '9px 20px', l: '12px 28px' }, BTN_FS = { s: 13, m: 15, l: 17 };
-  function buttonsHtml() {
-    var st = $('bt-style').value, sz = $('bt-size').value, align = $('bt-align').value, nt = $('bt-new').checked, arrow = $('bt-arrow').checked;
-    var items = $('bt-lines').value.split(/\r?\n/).map(function (l) { var p = l.split('|'); return { t: p[0].trim(), u: safeUrl(p.slice(1).join('|')) }; })
-      .filter(function (x) { return x.t; });
-    if (!items.length) return '';
-    var pad = st === 'tag' ? '4px 11px' : BTN_PAD[sz], fs = st === 'tag' ? 12.5 : BTN_FS[sz];
-    var look = {
-      grad: 'color:#ffffff;background-color:' + C.blue + ';background-image:linear-gradient(110deg,' + C.navy + ',' + C.blue + ');border:1px solid transparent;box-shadow:0 4px 12px rgba(0,33,57,.25);',
-      solid: 'color:#ffffff;background-color:' + C.blue + ';border:1px solid ' + C.blue + ';',
-      spark: 'color:#ffffff;background-color:' + C.spark + ';background-image:linear-gradient(135deg,#1E7BFF,#0A5BD3);border:1px solid transparent;box-shadow:0 4px 12px rgba(10,91,211,.3);',
-      outline: 'color:' + C.blue + ';background-color:#ffffff;border:2px solid ' + C.blue + ';',
-      chip: 'color:#ffffff;background-color:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);',
-      tag: 'color:' + C.navy3 + ';background-color:#ffffff;border:1px solid ' + C.sky + ';'
-    }[st];
-    var base = 'display:inline-block;box-sizing:border-box;padding:' + pad + ';border-radius:99px;font-family:' + FONT + ';font-size:' + fs + 'px;font-weight:600;line-height:1.3;text-decoration:none;white-space:nowrap;' + look;
-    var out = items.map(function (x) {
-      var label = esc(x.t) + (arrow ? ' &rarr;' : '');
-      if (!x.u) return '<span style="' + base + '">' + label + '</span>';
-      var ext = /^https?:/i.test(x.u) && nt;
-      return '<a href="' + esc(x.u) + '"' + (ext ? ' target="_blank" rel="noopener"' : '') + ' data-interception="off" style="' + base + 'cursor:pointer">' + label + '</a>';
-    });
-    if (align === 'inline') return out.join(' ');
-    return '<div data-spc="buttons" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:' + align + ';margin:14px 0;font-family:' + FONT + '">' + out.join('') + '</div>';
-  }
-  function calloutCircleHtml() {
-    var layout = $('cc-layout').value, title = $('cc-title').value.trim(), body = $('cc-body').value.trim(), val = $('cc-value').value.trim();
-    var o = readCircle('cc');
-    if (layout === 'row') {
-      return '<div data-spc="callout-circle" style="display:flex;align-items:center;gap:14px;margin:10px 0;font-family:' + FONT + ';font-size:15px;line-height:1.5;color:' + C.ink + '">' +
-        circleHtml(o) + '<div style="flex:1;min-width:0">' + (title ? '<b style="color:' + C.navy + '">' + esc(title) + '</b>' + (body ? ' &mdash; ' : '') : '') + lines(body) + '</div></div>';
-    }
-    var card = layout === 'card', bg = safeColor($('cc-bg').value, C.sparkLt);
-    return '<div data-spc="callout-circle" style="box-sizing:border-box;max-width:340px;margin:12px auto;padding:20px 20px 18px;text-align:center;font-family:' + FONT + ';color:' + C.navy2 + ';' +
-      (card ? 'background-color:' + bg + ';border-radius:18px;' : '') + '">' +
-      '<div style="display:flex;justify-content:center;margin:0 0 10px">' + circleHtml(o) + '</div>' +
-      (title ? '<div style="font-size:13px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:' + C.navy + '">' + esc(title) + '</div>' : '') +
-      (val ? '<div style="margin:4px 0 6px;font-size:38px;line-height:1.1;font-weight:700;letter-spacing:-.02em;color:' + C.navy + '">' + esc(val) + '</div>' : '') +
-      (body ? '<div style="margin-top:4px;font-size:14.5px;line-height:1.5">' + lines(body) + '</div>' : '') + '</div>';
-  }
-  var BOXES = {
-    note: { box: 'border-left:4px solid ' + C.blue + ';border-radius:0 8px 8px 0;background-color:' + C.mist + ';padding:12px 14px;color:' + C.navy2 + ';', t: C.navy, grad: 'navy' },
-    warn: { box: 'border:1px solid ' + C.line + ';border-left:6px solid #E8A317;border-radius:16px;background-color:#FFF9EC;padding:18px 22px;color:' + C.ink + ';' + SHADOW, t: '#7A4B00', grad: 'gold' },
-    card: { box: 'border:1px solid ' + C.line + ';border-radius:16px;background-color:#ffffff;padding:20px 22px;color:' + C.ink + ';' + SHADOW, t: C.navy, grad: 'navy' },
-    spark: { box: 'border:1px solid #D7E3FB;border-radius:16px;background-color:#F3F7FF;background-image:linear-gradient(180deg,#F3F7FF,#ffffff);padding:18px 22px;color:' + C.navy2 + ';', t: C.navy, grad: 'spark' },
-    success: { box: 'border:1px solid ' + C.line + ';border-left:6px solid #138A4B;border-radius:16px;background-color:#EEF8F1;padding:18px 22px;color:' + C.ink + ';', t: '#0B5D33', grad: 'green' },
-    danger: { box: 'border:1px solid ' + C.line + ';border-left:6px solid #C0262D;border-radius:16px;background-color:#FDEEEE;padding:18px 22px;color:' + C.ink + ';', t: '#8A1C22', grad: 'red' }
-  };
-  function calloutBoxHtml() {
-    var bx = BOXES[$('cb-type').value], title = $('cb-title').value.trim(), body = $('cb-body').value.trim();
-    var text = (title ? '<b style="display:block;margin-bottom:4px;color:' + bx.t + '">' + esc(title) + '</b>' : '') + lines(body);
-    var inner = $('cb-useicon').checked
-      ? '<div style="display:flex;gap:14px;align-items:flex-start">' + circleHtml(readCircle('cb')) + '<div style="flex:1;min-width:0">' + text + '</div></div>'
-      : text;
-    return '<div data-spc="callout-box" style="box-sizing:border-box;margin:14px 0;font-family:' + FONT + ';font-size:15.5px;line-height:1.55;' + bx.box + '">' + inner + '</div>';
-  }
-  function statsHtml() {
-    var acc = safeColor($('st-accent').value, C.blue), spark = $('st-lastspark').checked, nt = $('st-new').checked;
-    var rows = $('st-lines').value.split(/\r?\n/).map(function (l) { return l.split('|').map(function (s) { return s.trim(); }); }).filter(function (p) { return p[0]; });
-    if (!rows.length) return '';
-    var cards = rows.map(function (p, i) {
-      var hi = spark && rows.length > 1 && i === rows.length - 1, top = hi ? C.spark : acc, u = safeUrl(p[3] || '');
-      var st = 'display:block;box-sizing:border-box;flex:1 1 150px;min-width:140px;padding:16px 16px 14px;border-radius:14px;border-top:4px solid ' + top + ';text-align:center;text-decoration:none;color:inherit;' +
-        'background-color:' + (hi ? '#F3F7FF' : '#ffffff') + ';' + (hi ? 'background-image:linear-gradient(180deg,#ffffff,#F3F7FF);' : '') + SHADOW;
-      var inner = '<b style="display:block;font-size:32px;line-height:1.05;font-weight:700;color:' + C.navy + ';letter-spacing:-.02em">' + esc(p[0]) +
-        (p[1] ? '<small style="font-size:15px;font-weight:600;color:' + (hi ? C.spark : (acc === C.navy ? C.blue : acc)) + ';margin-left:2px">' + esc(p[1]) + '</small>' : '') + '</b>' +
-        (p[2] ? '<span style="display:block;margin-top:6px;font-size:13px;line-height:1.3;color:' + C.steel + '">' + esc(p[2]) + '</span>' : '');
-      if (!u) return '<div style="' + st + '">' + inner + '</div>';
-      var ext = /^https?:/i.test(u) && nt;
-      return '<a href="' + esc(u) + '"' + (ext ? ' target="_blank" rel="noopener"' : '') + ' data-interception="off" style="' + st + '">' + inner + '</a>';
-    });
-    return '<div data-spc="stat-cards" style="display:flex;flex-wrap:wrap;gap:14px;margin:16px 0;font-family:' + FONT + '">' + cards.join('') + '</div>';
-  }
-  function headingHtml() {
-    var t = $('hd-title').value.trim(), sub = $('hd-sub').value.trim(), lv = $('hd-level').value === 'h3' ? 'h3' : 'h2', g = $('hd-grad').value, a = C.blue, b = C.navy;
-    GRADS.forEach(function (x) { if (x[0] === g) { a = x[2]; b = x[3]; } });
-    if (g === 'navy') { a = C.blue; b = C.navy; }
-    if (!t) return '';
-    var big = lv === 'h2';
-    return '<' + lv + ' data-spc="heading" style="display:flex;align-items:center;gap:12px;margin:' + (big ? '36px' : '26px') + ' 0 ' + (sub ? '6px' : '14px') + ';padding:0;border:0;font-family:' + FONT + ';font-size:' + (big ? 26 : 21) + 'px;line-height:1.2;font-weight:700;color:' + C.navy + '">' +
-      '<span style="flex:none;display:inline-block;width:' + (big ? 7 : 6) + 'px;height:' + (big ? 30 : 24) + 'px;border-radius:99px;background-color:' + a + ';background-image:linear-gradient(180deg,' + a + ',' + b + ')"></span>' + esc(t) + '</' + lv + '>' +
-      (sub ? '<p style="margin:0 0 18px ' + (big ? 19 : 18) + 'px;font-family:' + FONT + ';font-size:15.5px;color:' + C.steel + '">' + esc(sub) + '</p>' : '');
-  }
-  var GEN = {
-    'he-f-icon': function () { return circleHtml(readCircle('ci')); },
-    'he-f-btn': buttonsHtml, 'he-f-circ': calloutCircleHtml, 'he-f-box': calloutBoxHtml, 'he-f-stat': statsHtml, 'he-f-head': headingHtml
-  };
-  var BLOCK = { 'he-f-icon': false, 'he-f-btn': true, 'he-f-circ': true, 'he-f-box': true, 'he-f-stat': true, 'he-f-head': true };
-
-  // show/hide fields that depend on another control (data-show="id=value" or data-show="checkboxId")
-  function applyShows() {
-    [].forEach.call(document.querySelectorAll('#he-comp-forms [data-show]'), function (n) {
-      var m = n.getAttribute('data-show').split('='), c = $(m[0]);
-      n.hidden = m.length > 1 ? c.value !== m[1] : !c.checked;
-    });
-  }
-  function refreshPreviews() {
-    applyShows();
-    Object.keys(GEN).forEach(function (id) {
-      var f = $(id); if (!f.classList.contains('open')) return;
-      var pv = $(id + '-prev'), html = GEN[id]();
-      pv.innerHTML = html || '<span class="note">Nothing to insert yet.</span>';
-      pv.classList.toggle('dark', id === 'he-f-btn' && $('bt-style').value === 'chip');
-      [].forEach.call(pv.querySelectorAll('a'), function (a) { a.addEventListener('click', function (e) { e.preventDefault(); }); });
-    });
-  }
-  $('he-comp-forms').addEventListener('input', refreshPreviews);
-  $('he-comp-forms').addEventListener('change', refreshPreviews);
-
-  $('he-comp-bar').addEventListener('mousedown', function (e) { if (e.target.closest('button')) e.preventDefault(); });
-  $('he-comp-bar').addEventListener('click', function (e) {
-    var b = e.target.closest('button'); if (!b || !b.dataset.form) return;
-    keepSel();
-    var f = $(b.dataset.form), wasOpen = f.classList.contains('open');
-    closeForms();
-    if (!wasOpen) { f.classList.add('open'); refreshPreviews(); var first = f.querySelector('input,select,textarea'); if (first) first.focus(); }
-  });
-  [].forEach.call(document.querySelectorAll('#he-comp-forms [data-close]'), function (b) { b.addEventListener('click', closeForms); });
-
-  function lockIcons(root) {
-    [].forEach.call((root || area).querySelectorAll('[data-spc="icon"]'), function (n) { n.setAttribute('contenteditable', 'false'); });
-  }
-  function placeCaret(node, offset) {
-    var r = document.createRange(); r.setStart(node, offset); r.collapse(true);
-    var s = getSelection(); s.removeAllRanges(); s.addRange(r); saved = r.cloneRange();
-  }
-  function isEmptyBlock(n) {
-    return n && n.nodeType === 1 && /^(P|DIV|H[1-6])$/.test(n.tagName) && !n.hasAttribute('data-spc') &&
-      !n.textContent.replace(/\u00a0/g, ' ').trim() && !n.querySelector('img,table,svg,[data-spc]');
-  }
-  // DOM insertion rather than execCommand('insertHTML'): the browser command splits and restyles nested blocks
-  function insertComponent(id) {
-    var html = GEN[id]();
-    if (!html) { say('Fill in the form first.'); return; }
-    if (showingSource()) { say('Switch back to the visual editor to insert components.'); return; }
-    var tpl = document.createElement('template'); tpl.innerHTML = html;
-    var frag = tpl.content, r = saved && area.contains(saved.startContainer) ? saved : null;
-    area.focus();
-    if (!BLOCK[id] && r) {
-      var gap = document.createTextNode('\u00a0');
-      frag.appendChild(gap);
-      r.deleteContents(); r.insertNode(frag);
-      placeCaret(gap, 1);
-    } else {
-      var tail = document.createElement('p'); tail.innerHTML = '<br>'; frag.appendChild(tail);
-      if (!r) area.appendChild(frag);
-      else {
-        var n = r.startContainer, cell = (n.nodeType === 1 ? n : n.parentNode).closest('td,th'), box = cell && area.contains(cell) ? cell : area;
-        if (n === box) {
-          var before = box.childNodes[r.startOffset - 1];
-          box.insertBefore(frag, before ? before.nextSibling : box.firstChild);
-        } else {
-          while (n.parentNode && n.parentNode !== box) n = n.parentNode;
-          if (isEmptyBlock(n)) box.replaceChild(frag, n);
-          else box.insertBefore(frag, n.nextSibling);   // after the paragraph (or loose text) holding the caret
-        }
-      }
-      placeCaret(tail, 0);
-    }
-    lockIcons();
-    closeForms();
-    say('Inserted. Click it to move, duplicate or remove it.');
-  }
-  Object.keys(GEN).forEach(function (id) { $(id + '-ok').addEventListener('click', function () { insertComponent(id); }); });
-
-  // ----- tools for the component the caret is in -----
-  var curComp = null, COMP_NAMES = { icon: 'Icon circle', buttons: 'Buttons', 'callout-circle': 'Callout circle', 'callout-box': 'Callout box', 'stat-cards': 'Stat cards', heading: 'Section heading' };
-  function trackComp(node) {
-    var n = node && (node.nodeType === 1 ? node : node.parentNode), top = null;
-    while (n && n !== area) { if (n.nodeType === 1 && n.hasAttribute('data-spc')) top = n; n = n.parentNode; }
-    if (n !== area) top = null;
-    curComp = top;
-    $('he-comp-tools').hidden = !top;
-    if (top) $('he-comp-name').textContent = COMP_NAMES[top.getAttribute('data-spc')] || 'Component';
-  }
-  area.addEventListener('click', function (e) { var c = e.target.closest && e.target.closest('[data-spc]'); if (c && area.contains(c)) trackComp(c); });
-  $('he-comp-tools').addEventListener('mousedown', function (e) { if (e.target.closest('button')) e.preventDefault(); });
-  $('he-comp-tools').addEventListener('click', function (e) {
-    var b = e.target.closest('button[data-comp]'); if (!b || !curComp || !area.contains(curComp)) return;
-    var c = curComp, act = b.getAttribute('data-comp'), p = c.parentNode;
-    // a subtitle paragraph travels with its heading
-    var sub = c.getAttribute('data-spc') === 'heading' && c.nextElementSibling && c.nextElementSibling.tagName === 'P' && /margin:0 0 18px/.test(c.nextElementSibling.getAttribute('style') || '') ? c.nextElementSibling : null;
-    var last = sub || c;
-    if (act === 'del') { if (sub) sub.remove(); c.remove(); curComp = null; $('he-comp-tools').hidden = true; say('Removed.'); return; }
-    if (act === 'dup') { var cl = c.cloneNode(true); p.insertBefore(cl, last.nextSibling); if (sub) p.insertBefore(sub.cloneNode(true), cl.nextSibling); say('Duplicated.'); return; }
-    if (act === 'after') {
-      var np = document.createElement('p'); np.innerHTML = '<br>'; p.insertBefore(np, last.nextSibling);
-      var r = document.createRange(); r.setStart(np, 0); r.collapse(true); var s = getSelection(); s.removeAllRanges(); s.addRange(r); area.focus(); keepSel(); return;
-    }
-    function skip(n, dir) { while (n && n.nodeType !== 1) n = dir < 0 ? n.previousSibling : n.nextSibling; return n; }
-    if (act === 'up') {
-      var prev = skip(c.previousSibling, -1), ph = prev && skip(prev.previousSibling, -1);
-      // step over a heading and its subtitle together
-      if (prev && ph && ph.getAttribute('data-spc') === 'heading' && prev.tagName === 'P' && /margin:0 0 18px/.test(prev.getAttribute('style') || '')) prev = ph;
-      if (prev) { p.insertBefore(c, prev); if (sub) p.insertBefore(sub, prev); } else say('Already at the top.'); }
-    if (act === 'down') {
-      var nx = skip(last.nextSibling, 1), nsub = nx && nx.getAttribute('data-spc') === 'heading' && skip(nx.nextSibling, 1);
-      if (nx) { p.insertBefore(nx, c); if (nsub && nsub.tagName === 'P' && /margin:0 0 18px/.test(nsub.getAttribute('style') || '')) p.insertBefore(nsub, c); }
-      else say('Already at the bottom.');
-    }
-  });
+  // ---------- components (shared kit, defined above) ----------
+  var kit = SPComponentKit({ prefix: 'he-', area: area, say: say, closeOther: closeForms,
+    blocked: function () { return showingSource() ? 'Switch back to the visual editor to insert components.' : ''; } });
+  function lockIcons() { kit.lockIcons(); }
 
   function showingSource() { return !src.hidden; }
   $('he-toggle').addEventListener('click', function () {
