@@ -136,6 +136,15 @@ button.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--
 .he-picker button[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 1px; background: #eaf2ff; }
 .he-cprev { flex-basis: 100%; min-height: 60px; padding: 16px; background: #fff; color: #323130; border: 1px dashed var(--line); border-radius: 6px; overflow: auto; }
 .he-cprev.dark { background: linear-gradient(115deg, #002139, #09314E 48%, #0076BC); }
+/* Alert panel tab: design settings across the top, full-width preview and code underneath */
+.cols.ap-stack { grid-template-columns: minmax(0, 1fr); }
+#controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; align-items: start; }
+#controls > .presets { grid-column: 1 / -1; }
+#controls > .group { border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; height: 100%; }
+#controls > .group.ap-g-text { grid-column: 1 / -1; order: 10; }
+#controls .ap-g-text .editor { min-height: 160px; }
+#controls .ap-g-text .field.narrow { max-width: 140px; }
+#controls .ap-g-text .row > .field:not(.narrow) { max-width: 320px; }
 header h1 .ver { display: inline-block; margin-left: 8px; padding: 2px 9px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); color: var(--muted); font-family: var(--font-code); font-size: 12px; font-weight: 400; vertical-align: middle; white-space: nowrap; }
 .he-area [data-spc] { outline: 1px dashed transparent; }
 .he-area [data-spc]:hover { outline-color: rgba(11,99,214,.35); }
@@ -145,7 +154,7 @@ header h1 .ver { display: inline-block; margin-left: 8px; padding: 2px 9px; bord
 <body>
 <div class="wrap">
   <header>
-    <h1>Alert Panel Builder <span class="ver" id="app-version" title="Version, deploy date, build number and commit">v1.6.0<span id="app-build"> &middot; __BUILD_INFO__</span></span></h1>
+    <h1>Alert Panel Builder <span class="ver" id="app-version" title="Version, deploy date, build number and commit">v1.6.1<span id="app-build"> &middot; __BUILD_INFO__</span></span></h1>
     <p>Tools for the Bridgeton Strong site: a gradient alert panel for a content web part, the header message script, and a message bar above the site header. Sample text is a placeholder to replace.</p>
   </header>
 
@@ -157,7 +166,7 @@ header h1 .ver { display: inline-block; margin-left: 8px; padding: 2px 9px; bord
   </div>
 
   <div id="panel-alert" role="tabpanel" aria-labelledby="tab-alert">
-  <div class="cols">
+  <div class="cols ap-stack">
     <form class="panel" id="controls" onsubmit="return false">
       <div class="presets">
         <button type="button" id="preset-light">Light frame</button>
@@ -234,7 +243,7 @@ header h1 .ver { display: inline-block; margin-left: 8px; padding: 2px 9px; bord
         </div>
       </div>
 
-      <div class="group">
+      <div class="group ap-g-text">
         <h2>Text</h2>
         <div class="field"><label for="heading">Heading (optional)</label><input type="text" id="heading" value="IMPORTANT PROCESS UPDATE:"></div>
         <div class="row">
@@ -288,7 +297,7 @@ header h1 .ver { display: inline-block; margin-left: 8px; padding: 2px 9px; bord
         <div class="field narrow"><label for="bsize">Body px</label><input type="number" id="bsize" min="10" max="32" value="14"></div>
       </div>
 
-      <div class="group">
+      <div class="group ap-g-links">
         <h2>Link defaults</h2>
         <div class="row">
           <div class="field"><span class="lbl">Color for links without their own</span><div class="color"><input type="color" id="lc" value="#005eff" aria-label="Link color"><input type="text" id="lc-hex" value="#005EFF" aria-label="Link hex"></div></div>
