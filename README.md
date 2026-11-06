@@ -30,7 +30,11 @@ Every component uses inline styles, so the copied HTML needs no `<style>` block.
 
 ## Version label
 
-The header shows the version (for example `v1.6.1 · Nov 6, 2026 · build 12 · 5d4206f`).
+The header shows the version (for example `v1.7.0 · Nov 6, 2026 · build 12 · 5d4206f`).
 
-- The **version number** (`v1.6.1`) is set by hand in `public/index.html`. Raise it when you ship a change: the middle number for a new feature, the last number for a fix.
+- The **version number** (`v1.7.0`) is set by hand in `public/index.html`. Raise it when you ship a change: the middle number for a new feature, the last number for a fix.
 - The **date, build number and commit** are filled in automatically by the deploy workflow, so they always match what is live. A copy opened straight from disk shows "local copy" instead.
+
+## Alert panel heading icon
+
+In the Alert panel's **Icon** menu, choose **Icon circle** (first tile after None) to use a gradient icon circle as the heading icon instead of a SharePoint icon file. You get every gradient, glyph, number/text or image option, plus size, icon color and shadow. Like the other components it needs an Embed or Script Editor web part to keep its styling.
